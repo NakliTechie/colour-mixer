@@ -319,37 +319,46 @@ body[data-mode="ink"] {
   margin: 0 auto;
 }
 
-/* Sticky mix is confined to this box — unsticks before Reference / value strip */
+/*
+ * Workbench: mix stays on the RIGHT (desktop).
+ * Sticky is confined here so it unsticks before Reference / value strip.
+ */
 .primary-stage {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  width: 100%;
 }
 
 @media (min-width: 900px) {
   .primary-stage {
     display: grid;
-    grid-template-columns: 1fr 1.2fr;
+    /* left column narrower, mix column wider — mix on the right */
+    grid-template-columns: minmax(280px, 1fr) minmax(340px, 1.25fr);
     grid-template-areas:
       "palette mixer"
-      "glaze mixer";
+      "glaze   mixer";
     align-items: start;
     gap: 0.9rem;
   }
 
-  .palette-panel { grid-area: palette; }
-  .mixer-panel { grid-area: mixer; }
-  .glaze-panel { grid-area: glaze; }
+  .primary-stage > .palette-panel {
+    grid-area: palette;
+  }
 
-  .mixer-panel {
+  .primary-stage > .mixer-panel {
+    grid-area: mixer;
     position: sticky;
     top: 0.75rem;
-    /* Stay under sticky mobile bar if any; keep above stage siblings only */
     z-index: 2;
-    /* Tall mix panels scroll inside instead of covering the page forever */
     max-height: calc(100vh - 1.5rem);
     overflow-y: auto;
     overscroll-behavior: contain;
+    align-self: start;
+  }
+
+  .primary-stage > .glaze-panel {
+    grid-area: glaze;
   }
 }
 
