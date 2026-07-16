@@ -266,8 +266,9 @@
     const result = M.computeDisplayedResult();
     if (!st.slots.length) return;
 
+    const slotLines = st.slots.length;
     const w = 720;
-    const h = 420;
+    const h = Math.max(420, 320 + slotLines * 30);
     const canvas = document.createElement("canvas");
     canvas.width = w;
     canvas.height = h;
@@ -286,13 +287,9 @@
     ctx.fillText("Colour Mixer · recipe", 40, 56);
     ctx.font = "14px system-ui, sans-serif";
     ctx.fillStyle = "#5c564e";
-    ctx.fillText(
-      `${st.mode} · mixer.naklitechie.com`,
-      40,
-      80
-    );
+    ctx.fillText(`${st.mode} · mixer.naklitechie.com`, 40, 80);
 
-    // swatch
+    // swatch on ground
     const ground = M.groundHex();
     ctx.fillStyle = ground;
     roundRect(ctx, 40, 110, 200, 200, 16);
@@ -309,8 +306,7 @@
     ctx.fillText(result.display, 280, 140);
     ctx.font = "15px system-ui, sans-serif";
     ctx.fillStyle = "#3a3530";
-    const recipe = result.recipe;
-    wrapText(ctx, recipe, 280, 175, 400, 22);
+    wrapText(ctx, result.recipe, 280, 175, 400, 22);
 
     // slots
     let y = 280;
@@ -319,20 +315,36 @@
       ctx.fillStyle = s.hex;
       roundRect(ctx, 280, y - 12, 22, 22, 4);
       ctx.fill();
+      ctx.strokeStyle = "rgba(0,0,0,0.12)";
+      ctx.stroke();
       ctx.fillStyle = "#1c1a17";
-      ctx.fillText(`${s.parts}× ${s.name}`, 312, y + 4);
+      const label = `${s.parts}× ${s.name}`.slice(0, 48);
+      ctx.fillText(label, 312, y + 4);
       y += 28;
     });
 
-    canvas.toBlob((blob) => {
-      if (!blob) return;
+    const filename = `mix-${result.display.replace("#", "")}.png`;
+    const finish = (href, revoke) => {
       const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `mix-${result.display.replace("#", "")}.png`;
+      a.href = href;
+      a.download = filename;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(a.href);
+      a.remove();
+      if (revoke) setTimeout(() => URL.revokeObjectURL(href), 1500);
       M.toast("Recipe card downloaded");
-    }, "image/png");
+    };
+    if (canvas.toBlob) {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          finish(canvas.toDataURL("image/png"), false);
+          return;
+        }
+        finish(URL.createObjectURL(blob), true);
+      }, "image/png");
+    } else {
+      finish(canvas.toDataURL("image/png"), false);
+    }
   }
 
   function roundRect(ctx, x, y, w, h, r) {
@@ -549,14 +561,9 @@
       M.toast("Add paints to share");
       return;
     }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(url).then(
-        () => M.toast("Share link copied"),
-        () => M.toast(url)
-      );
-    } else {
-      M.toast("Link ready — use Share QR");
-    }
+    // Surface QR under Studio tools
+    const tools = document.getElementById("tools-panel");
+    if (tools) tools.open = true;
     const wrap = $("#share-qr-wrap");
     const img = $("#share-qr-img");
     const txt = $("#share-url-text");
@@ -566,6 +573,31 @@
         "https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=" +
         encodeURIComponent(url);
       if (txt) txt.textContent = url;
+      wrap.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    // Prefer native share sheet when available (mobile)
+    if (navigator.share) {
+      navigator
+        .share({
+          title: "Colour Mixer recipe",
+          text: "Pigment mix recipe from Colour Mixer",
+          url,
+        })
+        .then(() => M.toast("Shared"))
+        .catch(() => copyShareUrl(url, M));
+      return;
+    }
+    copyShareUrl(url, M);
+  }
+
+  function copyShareUrl(url, M) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(
+        () => M.toast("Share link copied"),
+        () => M.toast("Copy this link from Studio tools")
+      );
+    } else {
+      M.toast("Share link ready below");
     }
   }
 
