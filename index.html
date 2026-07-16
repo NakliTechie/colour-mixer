@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#2c3e50" />
   <title>Colour Mixer — Paint &amp; Ink</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='12' cy='14' r='8' fill='%232B4C9B'/%3E%3Ccircle cx='20' cy='18' r='8' fill='%23F2B705' opacity='0.9'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="css/styles.css?v=11" />
+  <link rel="stylesheet" href="css/styles.css?v=12" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
@@ -21,7 +21,12 @@
         <h1>Colour Mixer</h1>
         <p class="tagline">Plan pigment mixes at the easel</p>
       </div>
-      <a class="sister-chip" href="https://hueandcry.naklitechie.com/" target="_blank" rel="noopener">Hue &amp; Cry ↗</a>
+      <div class="header-actions">
+        <button type="button" class="sister-chip help-chip" id="open-help" aria-haspopup="dialog" aria-controls="help-modal">
+          Help
+        </button>
+        <a class="sister-chip" href="https://hueandcry.naklitechie.com/" target="_blank" rel="noopener">Hue &amp; Cry ↗</a>
+      </div>
     </div>
 
     <div class="mode-toggle" role="group" aria-label="Paint medium">
@@ -385,6 +390,8 @@
       (Kubelka–Munk). Planning approximations only.
     </p>
     <p class="footer-links">
+      <button type="button" class="footer-help-btn" id="open-help-footer">Help</button>
+      <span aria-hidden="true">·</span>
       <a href="https://hueandcry.naklitechie.com/">Hue &amp; Cry</a>
       <span aria-hidden="true">·</span>
       <a href="https://github.com/NakliTechie/colour-mixer">Source</a>
@@ -395,13 +402,132 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
+  <!-- Help modal -->
+  <div class="help-overlay" id="help-modal" hidden role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="help-dialog">
+      <header class="help-dialog-head">
+        <h2 id="help-title">What this site can do</h2>
+        <button type="button" class="help-close" id="close-help" aria-label="Close help">×</button>
+      </header>
+      <div class="help-dialog-body">
+        <p class="help-lead">
+          Colour Mixer is a planning tool for real-world paint and ink mixes.
+          Colours blend like pigment (Kubelka–Munk via spectral.js), not like screen RGB averages.
+          Values are approximate mass-tones for planning — not brand-certified lab data.
+        </p>
+
+        <section class="help-section">
+          <h3>1. Choose a medium</h3>
+          <p>Switch at the top:</p>
+          <ul>
+            <li><strong>Watercolour</strong> — lighten with water; paper is your white</li>
+            <li><strong>Gouache</strong> — water + white + body (matte / opaque)</li>
+            <li><strong>Acrylic</strong> — white, black, covering power</li>
+            <li><strong>Oil</strong> — same body controls; linen ground by default</li>
+            <li><strong>Ink</strong> — dilution washes</li>
+          </ul>
+        </section>
+
+        <section class="help-section">
+          <h3>2. Build a mix</h3>
+          <ul>
+            <li>Tap paints from <strong>Limited</strong>, <strong>Brands</strong>, <strong>Common</strong>, <strong>Saved</strong>, or <strong>Custom</strong></li>
+            <li>Adjust <strong>parts</strong> per paint; use water / white / black / body as the medium allows</li>
+            <li><strong>Try sample mix</strong> loads Ultramarine + Burnt Sienna (classic grey)</li>
+            <li>Read the large swatch, hex, RGB, and recipe; copy hex anytime</li>
+            <li><strong>Undo / Redo / Clear</strong> in the Mix panel header</li>
+          </ul>
+        </section>
+
+        <section class="help-section">
+          <h3>3. Paint tags</h3>
+          <p>Swatches show planning traits (inferred from pigment codes / names when not set by hand):</p>
+          <ul>
+            <li><strong>Opacity</strong> — transparent · semi · opaque</li>
+            <li><strong>Staining</strong> — low · med · high</li>
+            <li><strong>Granulating</strong> — sedimentary texture tendency</li>
+          </ul>
+        </section>
+
+        <section class="help-section">
+          <h3>4. Result tools</h3>
+          <ul>
+            <li><strong>Mud score</strong> — clean / watch / risk from paint count, complements, chroma</li>
+            <li><strong>Viewing light</strong> — CIE <strong>D65</strong> (day), <strong>A</strong> (warm 2856&nbsp;K), <strong>D75</strong> (cool daylight). Spectral reflectance × illuminant SPD × CIE 1931 2° CMFs, Bradford-adapted to sRGB. Three-way strip compares all at once</li>
+            <li><strong>Harmonies</strong> — complement, analogous, triad chips; tap to add the nearest limited-palette paint</li>
+            <li><strong>Pigment vs RGB</strong> — Kubelka–Munk mix beside dumb RGB average</li>
+            <li><strong>Save</strong> — history on this device only</li>
+            <li><strong>Add glaze</strong> — push the mix onto the glaze stack</li>
+            <li><strong>Export card</strong> — download a PNG recipe card</li>
+            <li><strong>Share</strong> — copy a <code>?mix=</code> link (and QR); open the link later to restore the recipe. Mobile may offer the system share sheet</li>
+          </ul>
+        </section>
+
+        <section class="help-section">
+          <h3>5. Glaze stack</h3>
+          <ul>
+            <li>Pick a <strong>ground</strong> (paper, canvas, linen, toned panel…)</li>
+            <li>Layers stack bottom → top with per-layer strength</li>
+            <li>Copy the composite hex or <strong>Use as mix base</strong></li>
+          </ul>
+        </section>
+
+        <section class="help-section">
+          <h3>6. Reference</h3>
+          <ul>
+            <li><strong>Hue wheel</strong> — mix and tube positions; click for a target hue and nearest paints</li>
+            <li><strong>Harmony rings</strong> — optional arcs for analogous / complement / triad</li>
+            <li><strong>Value strip</strong> — same mix lighter → fuller (water or body steps)</li>
+            <li><strong>Temperature</strong> chip — warm / cool / neutral bias</li>
+          </ul>
+        </section>
+
+        <section class="help-section">
+          <h3>7. Studio tools</h3>
+          <ul>
+            <li><strong>Mixing chart</strong> — ratio grid from the first two paints in the mix</li>
+            <li><strong>Compare A / B</strong> — park two recipes side by side and reload either</li>
+            <li><strong>Print palette chart</strong> — limited tubes + sample 1:1 mixes</li>
+            <li><strong>Share QR</strong> — same share link as a QR image</li>
+            <li><strong>Match from photo</strong> — sample a colour, get suggested limited-palette recipes</li>
+            <li><strong>Tips</strong> — medium-specific mixing advice</li>
+            <li><strong>History</strong> — reload past saves from this browser</li>
+          </ul>
+        </section>
+
+        <section class="help-section">
+          <h3>8. Saved palettes</h3>
+          <p>
+            Under Palette → <strong>Saved</strong>, store the paints currently in your mix as a named set.
+            Tap a swatch to add one colour, or load the whole set.
+          </p>
+        </section>
+
+        <section class="help-section">
+          <h3>Keyboard &amp; tips</h3>
+          <ul>
+            <li><kbd>?</kbd> or <kbd>Shift+/</kbd> — open this help</li>
+            <li><kbd>Esc</kbd> — close help</li>
+            <li>On phones, a sticky bar keeps hex + recipe visible while you scroll</li>
+            <li>Sister tool: <a href="https://hueandcry.naklitechie.com/" target="_blank" rel="noopener">Hue &amp; Cry</a> — Sanzo Wada combinations from a photo</li>
+          </ul>
+        </section>
+
+        <p class="help-footnote">
+          Engine: <a href="https://github.com/rvanwijnen/spectral.js" target="_blank" rel="noopener">spectral.js</a>
+          (MIT). Source: <a href="https://github.com/NakliTechie/colour-mixer" target="_blank" rel="noopener">github.com/NakliTechie/colour-mixer</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+
   <!-- Print-only palette chart -->
   <div id="print-chart-root" class="print-chart-root" aria-hidden="true"></div>
 
-  <script src="vendor/spectral.min.js?v=11"></script>
-  <script src="js/illuminants.js?v=11"></script>
-  <script src="js/palettes.js?v=11"></script>
-  <script src="js/app.js?v=11"></script>
-  <script src="js/studio.js?v=11"></script>
+  <script src="vendor/spectral.min.js?v=12"></script>
+  <script src="js/illuminants.js?v=12"></script>
+  <script src="js/palettes.js?v=12"></script>
+  <script src="js/app.js?v=12"></script>
+  <script src="js/studio.js?v=12"></script>
 </body>
 </html>

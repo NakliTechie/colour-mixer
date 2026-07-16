@@ -774,8 +774,59 @@
     }
   }
 
+  // ——— Help modal ———
+  let helpLastFocus = null;
+
+  function openHelp() {
+    const modal = $("#help-modal");
+    if (!modal) return;
+    helpLastFocus = document.activeElement;
+    modal.hidden = false;
+    document.body.classList.add("help-open");
+    const closeBtn = $("#close-help");
+    if (closeBtn) closeBtn.focus();
+  }
+
+  function closeHelp() {
+    const modal = $("#help-modal");
+    if (!modal || modal.hidden) return;
+    modal.hidden = true;
+    document.body.classList.remove("help-open");
+    if (helpLastFocus && typeof helpLastFocus.focus === "function") {
+      helpLastFocus.focus();
+    }
+  }
+
   function bind() {
     document.addEventListener("mixer:update", onMixerUpdate);
+
+    $("#open-help")?.addEventListener("click", openHelp);
+    $("#open-help-footer")?.addEventListener("click", openHelp);
+    $("#close-help")?.addEventListener("click", closeHelp);
+    $("#help-modal")?.addEventListener("click", (e) => {
+      if (e.target.id === "help-modal") closeHelp();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeHelp();
+        return;
+      }
+      // ? or Shift+/ opens help (ignore when typing in inputs)
+      const t = e.target;
+      const typing =
+        t &&
+        (t.tagName === "INPUT" ||
+          t.tagName === "TEXTAREA" ||
+          t.tagName === "SELECT" ||
+          t.isContentEditable);
+      if (typing) return;
+      if (e.key === "?" || (e.key === "/" && e.shiftKey)) {
+        e.preventDefault();
+        const modal = $("#help-modal");
+        if (modal && !modal.hidden) closeHelp();
+        else openHelp();
+      }
+    });
 
     document.querySelectorAll("[data-light]").forEach((btn) => {
       btn.addEventListener("click", () => {
