@@ -44,16 +44,36 @@ No build step. No backend.
 
 Under **Brands** (filtered by medium):
 
-| Brand | Line | Medium |
-|-------|------|--------|
-| Winsor & Newton | Professional Watercolour | WC |
-| Winsor & Newton | Cotman Watercolour | WC |
-| Daniel Smith | Extra Fine Watercolour | WC |
-| Schmincke | Horadam Aquarell | WC |
-| Sennelier | l'Aquarelle | WC |
-| Golden | Heavy Body Acrylic | Acrylic |
-| Liquitex | Heavy Body Acrylic | Acrylic |
-| Winsor & Newton | Professional Acrylic | Acrylic |
+### Watercolour
+| Brand | Line |
+|-------|------|
+| Winsor & Newton | Professional Watercolour |
+| Winsor & Newton | Cotman Watercolour |
+| Daniel Smith | Extra Fine Watercolour |
+| Schmincke | Horadam Aquarell |
+| Sennelier | l'Aquarelle |
+| Holbein | Artists' Watercolour |
+| M. Graham | Artists' Watercolour |
+| Rembrandt | Extra Fine Watercolour |
+| White Nights | Extra Fine Watercolour |
+| QoR (Golden) | Modern Watercolor |
+| Mijello | Mission Gold |
+| Roman Szmal | Aquarius |
+| Daler-Rowney | Artists' Watercolour |
+
+### Acrylic
+| Brand | Line |
+|-------|------|
+| Golden | Heavy Body Acrylic |
+| Liquitex | Heavy Body Acrylic |
+| Winsor & Newton | Professional Acrylic |
+| Winsor & Newton | Galeria Acrylic |
+| Amsterdam | Standard Series |
+| Matisse | Structure Acrylic |
+| Atelier | Interactive Acrylic |
+| Pébéo | Studio Acrylics |
+| Holbein | Heavy Body Acrylic |
+| Blick | Artists' Acrylic |
 
 ## Notes
 

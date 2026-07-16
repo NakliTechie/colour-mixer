@@ -423,11 +423,18 @@
 
   function brandsForMode() {
     const list = window.BRAND_PALETTES || [];
-    return list.filter((b) => {
-      if (b.medium === "both") return true;
-      if (state.mode === "watercolour") return b.medium === "watercolour";
-      return b.medium === "acrylic";
-    });
+    return list
+      .filter((b) => {
+        if (b.medium === "both") return true;
+        if (state.mode === "watercolour") return b.medium === "watercolour";
+        return b.medium === "acrylic";
+      })
+      .slice()
+      .sort((a, b) => {
+        const ka = `${a.brand} ${a.line}`.toLowerCase();
+        const kb = `${b.brand} ${b.line}`.toLowerCase();
+        return ka.localeCompare(kb);
+      });
   }
 
   function currentBrand() {
