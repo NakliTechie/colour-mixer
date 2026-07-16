@@ -10,8 +10,9 @@ Single-page planning tool for **watercolour**, **gouache**, **acrylic**, **oil**
 - Photo sample + suggested matches
 - Mode-aware tips and local history
 
-**Planned host:** `https://mixer.naklitechie.com`  
-**Repo:** https://github.com/NakliTechie/colour-mixer
+**Host:** `https://mixer.naklitechie.com`  
+**Repo:** https://github.com/NakliTechie/colour-mixer  
+**Sister:** [Hue & Cry](https://hueandcry.naklitechie.com/) — Sanzo Wada combinations from a photo
 
 ## Run locally
 

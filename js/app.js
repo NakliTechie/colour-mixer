@@ -47,7 +47,11 @@
     custom: loadJSON(CUSTOM_KEY, []),
     sampleHex: null,
     brandId: localStorage.getItem(BRAND_KEY) || "wn-pwc",
+    /** @type {number|null} target hue 0–360 from wheel click */
+    targetHue: null,
   };
+
+  let wheelDrawn = false;
 
   function usesWhiteBlack() {
     return state.mode === "acrylic" || state.mode === "oil" || state.mode === "gouache";
@@ -145,6 +149,12 @@
     historyList: $("#history-list"),
     clearHistory: $("#clear-history"),
     toast: $("#toast"),
+    hueWheel: $("#hue-wheel"),
+    wheelReadout: $("#wheel-readout"),
+    wheelSuggestions: $("#wheel-suggestions"),
+    valueStrip: $("#value-strip"),
+    valueStripHint: $("#value-strip-hint"),
+    tempChip: $("#temp-chip"),
   };
 
   // ——— Utils ———
@@ -315,14 +325,19 @@
     }));
   }
 
-  function computeMassTone() {
+  /**
+   * @param {{ water?: number, white?: number, black?: number, opacity?: number }} [ov]
+   */
+  function computeMassTone(ov = {}) {
+    const white = ov.white ?? state.white;
+    const black = ov.black ?? state.black;
     const entries = baseMixEntries();
     if (!entries.length) return null;
 
     if (usesWhiteBlack()) {
       const extra = [...entries];
       const pigmentTotal = entries.reduce((a, e) => a + e.factor, 0);
-      if (state.white > 0) {
+      if (white > 0) {
         const whiteName =
           state.mode === "oil"
             ? "Titanium White"
@@ -331,14 +346,14 @@
               : "Titanium White";
         extra.push({
           hex: "#F7F5F0",
-          factor: (state.white / 100) * pigmentTotal * 1.4,
+          factor: (white / 100) * pigmentTotal * 1.4,
           name: whiteName,
         });
       }
-      if (state.black > 0 && (state.mode === "acrylic" || state.mode === "oil")) {
+      if (black > 0 && (state.mode === "acrylic" || state.mode === "oil")) {
         extra.push({
           hex: "#1A1A1A",
-          factor: (state.black / 100) * pigmentTotal * 1.1,
+          factor: (black / 100) * pigmentTotal * 1.1,
           name: state.mode === "oil" ? "Ivory Black" : "Carbon Black",
         });
       }
@@ -349,7 +364,6 @@
       };
     }
 
-    // Watercolour / ink: pure pigment (dilution at display)
     return {
       pigment: mixPigments(entries),
       rgbAvg: mixRgbAverage(entries),
@@ -357,8 +371,13 @@
     };
   }
 
-  function computeDisplayedResult() {
-    const mass = computeMassTone();
+  /**
+   * @param {{ water?: number, white?: number, black?: number, opacity?: number }} [ov]
+   */
+  function computeDisplayedResult(ov = {}) {
+    const water = ov.water ?? state.water;
+    const opacity = ov.opacity ?? state.opacity;
+    const mass = computeMassTone(ov);
     const ground = groundHex();
     if (!mass) {
       return {
@@ -375,37 +394,33 @@
     let alpha;
 
     if (state.mode === "watercolour" || state.mode === "ink") {
-      // water/dilution 0 = full strength, 95 = pale wash
-      alpha = 1 - state.water / 100;
+      alpha = 1 - water / 100;
       const wash =
-        state.water > 5
+        water > 5
           ? mixPigments([
               { hex: mass.pigment, factor: Math.max(0.05, alpha) },
-              { hex: ground, factor: state.water / 100 },
+              { hex: ground, factor: water / 100 },
             ])
           : mass.pigment;
-      // Ink sits a touch flatter/more dye-like on paper
       const cover =
         state.mode === "ink"
           ? clamp(alpha * 1.12, 0.06, 1)
           : clamp(alpha * 1.05, 0.05, 1);
       display = compositeOver(ground, wash, cover);
     } else if (state.mode === "gouache") {
-      // Opaque body + optional water (matte wash when wet)
-      const body = state.opacity / 100;
-      const wet = 1 - state.water / 100;
+      const body = opacity / 100;
+      const wet = 1 - water / 100;
       alpha = clamp(body * (0.45 + 0.55 * wet), 0.12, 1);
       const film =
-        state.water > 10
+        water > 10
           ? mixPigments([
               { hex: mass.pigment, factor: Math.max(0.1, wet) },
-              { hex: ground, factor: state.water / 200 },
+              { hex: ground, factor: water / 200 },
             ])
           : mass.pigment;
       display = compositeOver(ground, film, alpha);
     } else {
-      // Acrylic / oil
-      alpha = state.opacity / 100;
+      alpha = opacity / 100;
       display = compositeOver(ground, mass.pigment, alpha);
     }
 
@@ -417,6 +432,52 @@
       alpha,
       recipe: buildRecipe(mass.entries),
     };
+  }
+
+  // ——— Colour helpers (wheel / temperature) ———
+  function rgbToHsl(r, g, b) {
+    r /= 255;
+    g /= 255;
+    b /= 255;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h = 0;
+    let s = 0;
+    const l = (max + min) / 2;
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r:
+          h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+          break;
+        case g:
+          h = ((b - r) / d + 2) / 6;
+          break;
+        default:
+          h = ((r - g) / d + 4) / 6;
+      }
+    }
+    return { h: h * 360, s, l };
+  }
+
+  function hexToHsl(hex) {
+    const { r, g, b } = hexToRgb(normalizeHex(hex));
+    return rgbToHsl(r, g, b);
+  }
+
+  function temperatureLabel(h, s, l) {
+    if (s < 0.08 || l < 0.08 || l > 0.92) return "Neutral / low chroma";
+    // Warm: red–yellow–orange; cool: green–cyan–blue–violet
+    if (h < 70 || h >= 330) return "Warm bias";
+    if (h >= 70 && h < 100) return "Warm–neutral (yellow-green)";
+    if (h >= 100 && h < 280) return "Cool bias";
+    return "Cool–warm edge (magenta)";
+  }
+
+  function hueDistance(a, b) {
+    const d = Math.abs(a - b) % 360;
+    return d > 180 ? 360 - d : d;
   }
 
   function buildRecipe(entries) {
@@ -759,6 +820,282 @@
     el.whiteReadout.textContent = `${state.white}%`;
     el.blackReadout.textContent = `${state.black}%`;
     el.opacityReadout.textContent = `${state.opacity}%`;
+
+    renderHueWheel(result);
+    renderValueStrip();
+  }
+
+  function ensureWheelBase() {
+    const canvas = el.hueWheel;
+    if (!canvas || wheelDrawn) return;
+    const size = canvas.width;
+    const ctx = canvas.getContext("2d");
+    const cx = size / 2;
+    const cy = size / 2;
+    const rOuter = size / 2 - 2;
+    const rInner = rOuter * 0.22;
+    const img = ctx.createImageData(size, size);
+    const data = img.data;
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const dx = x - cx;
+        const dy = y - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const i = (y * size + x) * 4;
+        if (dist > rOuter || dist < rInner) {
+          data[i + 3] = 0;
+          continue;
+        }
+        // angle: 0° at +x (red), clockwise in screen coords → standard HSL
+        let ang = (Math.atan2(dy, dx) * 180) / Math.PI;
+        if (ang < 0) ang += 360;
+        const sat = (dist - rInner) / (rOuter - rInner);
+        // HSL → RGB at L=0.5
+        const h = ang / 360;
+        const s = clamp(sat, 0, 1);
+        const l = 0.5;
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        const hue2rgb = (t) => {
+          if (t < 0) t += 1;
+          if (t > 1) t -= 1;
+          if (t < 1 / 6) return p + (q - p) * 6 * t;
+          if (t < 1 / 2) return q;
+          if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+          return p;
+        };
+        data[i] = Math.round(hue2rgb(h + 1 / 3) * 255);
+        data[i + 1] = Math.round(hue2rgb(h) * 255);
+        data[i + 2] = Math.round(hue2rgb(h - 1 / 3) * 255);
+        data[i + 3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    // soft hole
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.beginPath();
+    ctx.arc(cx, cy, rInner - 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalCompositeOperation = "source-over";
+    // cache base to offscreen
+    const off = document.createElement("canvas");
+    off.width = size;
+    off.height = size;
+    off.getContext("2d").drawImage(canvas, 0, 0);
+    canvas._base = off;
+    wheelDrawn = true;
+  }
+
+  function renderHueWheel(result) {
+    const canvas = el.hueWheel;
+    if (!canvas) return;
+    ensureWheelBase();
+    const size = canvas.width;
+    const ctx = canvas.getContext("2d");
+    const cx = size / 2;
+    const cy = size / 2;
+    const rOuter = size / 2 - 2;
+    const rInner = rOuter * 0.22;
+    const rMid = (rInner + rOuter) / 2;
+
+    if (canvas._base) {
+      ctx.clearRect(0, 0, size, size);
+      ctx.drawImage(canvas._base, 0, 0);
+    }
+
+    const plot = (hex, style) => {
+      const hsl = hexToHsl(hex);
+      if (hsl.s < 0.04) {
+        // near-grey → center
+        drawDot(cx, cy, style);
+        return;
+      }
+      const ang = (hsl.h * Math.PI) / 180;
+      const sat = clamp(hsl.s, 0.15, 1);
+      const r = rInner + (rOuter - rInner) * sat;
+      drawDot(cx + Math.cos(ang) * r, cy + Math.sin(ang) * r, style);
+    };
+
+    function drawDot(x, y, style) {
+      ctx.beginPath();
+      if (style === "mix") {
+        ctx.arc(x, y, 8, 0, Math.PI * 2);
+        ctx.fillStyle = "#fff";
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = "#1c1a17";
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = result.display;
+        ctx.fill();
+      } else if (style === "tube") {
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "#fff";
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = "rgba(28,26,23,0.55)";
+        ctx.stroke();
+      } else if (style === "target") {
+        ctx.arc(x, y, 7, 0, Math.PI * 2);
+        ctx.strokeStyle = "#1c1a17";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x - 10, y);
+        ctx.lineTo(x + 10, y);
+        ctx.moveTo(x, y - 10);
+        ctx.lineTo(x, y + 10);
+        ctx.stroke();
+      }
+    }
+
+    // Parent tubes
+    state.slots.forEach((s) => plot(s.hex, "tube"));
+
+    // Current mix
+    if (state.slots.length) {
+      plot(result.display, "mix");
+      const hsl = hexToHsl(result.display);
+      const temp = temperatureLabel(hsl.h, hsl.s, hsl.l);
+      if (el.tempChip) {
+        el.tempChip.hidden = false;
+        el.tempChip.textContent = temp;
+      }
+      if (el.wheelReadout) {
+        el.wheelReadout.textContent =
+          hsl.s < 0.06
+            ? `Mix is low-chroma (≈ neutral) · ${result.display}`
+            : `Hue ≈ ${Math.round(hsl.h)}° · ${temp} · ${result.display}`;
+      }
+    } else {
+      if (el.tempChip) el.tempChip.hidden = true;
+      if (el.wheelReadout) {
+        el.wheelReadout.textContent = state.targetHue != null
+          ? `Target hue ≈ ${Math.round(state.targetHue)}° — add paints or pick a suggestion`
+          : "Add paints to place your mix on the wheel.";
+      }
+    }
+
+    // Target from click
+    if (state.targetHue != null) {
+      const ang = (state.targetHue * Math.PI) / 180;
+      drawDot(cx + Math.cos(ang) * rMid, cy + Math.sin(ang) * rMid, "target");
+      renderWheelSuggestions(state.targetHue);
+    } else if (el.wheelSuggestions) {
+      el.wheelSuggestions.innerHTML = "";
+    }
+  }
+
+  function renderWheelSuggestions(hue) {
+    if (!el.wheelSuggestions) return;
+    const paints = window.PAINT_PALETTES.limited
+      .map((p) => {
+        const hsl = hexToHsl(p.hex);
+        return {
+          ...p,
+          dist: hsl.s < 0.05 ? 999 : hueDistance(hue, hsl.h),
+          hue: hsl.h,
+        };
+      })
+      .filter((p) => p.dist < 999)
+      .sort((a, b) => a.dist - b.dist)
+      .slice(0, 3);
+
+    el.wheelSuggestions.innerHTML = paints
+      .map(
+        (p) =>
+          `<button type="button" class="wheel-sug" data-sug-hex="${escapeHtml(p.hex)}" data-sug-name="${escapeHtml(p.name)}">
+            <span class="mini" style="background:${normalizeHex(p.hex)}"></span>
+            <span style="flex:1">${escapeHtml(p.name)}</span>
+            <span class="micro">Δ${Math.round(p.dist)}°</span>
+          </button>`
+      )
+      .join("");
+  }
+
+  function handleWheelPointer(clientX, clientY) {
+    const canvas = el.hueWheel;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    const dx = x - cx;
+    const dy = y - cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const rOuter = canvas.width / 2 - 2;
+    const rInner = rOuter * 0.22;
+    if (dist < rInner * 0.5 || dist > rOuter + 4) return;
+    let ang = (Math.atan2(dy, dx) * 180) / Math.PI;
+    if (ang < 0) ang += 360;
+    state.targetHue = ang;
+    renderHueWheel(computeDisplayedResult());
+  }
+
+  function renderValueStrip() {
+    if (!el.valueStrip) return;
+    if (!state.slots.length) {
+      el.valueStrip.innerHTML =
+        '<p class="micro" style="grid-column:1/-1">Add paints to see value steps.</p>';
+      if (el.valueStripHint) {
+        el.valueStripHint.textContent = usesDilution()
+          ? "Same mix at lighter → fuller strength (water / dilution)."
+          : "Same mix from thin body → full covering power.";
+      }
+      return;
+    }
+
+    const steps = [];
+    if (state.mode === "watercolour" || state.mode === "ink") {
+      // pale → full
+      [85, 70, 55, 40, 25, 12, 0].forEach((water) => {
+        const r = computeDisplayedResult({ water });
+        steps.push({
+          hex: r.display,
+          label: water === 0 ? "full" : `w${water}`,
+        });
+      });
+      if (el.valueStripHint) {
+        el.valueStripHint.textContent =
+          "Water high → low (pale wash → mass-tone).";
+      }
+    } else if (state.mode === "gouache") {
+      [70, 50, 35, 20, 10, 5, 0].forEach((water, i) => {
+        const opacity = [40, 55, 70, 80, 90, 95, 100][i];
+        const r = computeDisplayedResult({ water, opacity });
+        steps.push({ hex: r.display, label: water ? `w${water}` : "body" });
+      });
+      if (el.valueStripHint) {
+        el.valueStripHint.textContent =
+          "Gouache: more water / less body → fuller matte body.";
+      }
+    } else {
+      [20, 35, 50, 65, 80, 90, 100].forEach((opacity) => {
+        const r = computeDisplayedResult({ opacity });
+        steps.push({
+          hex: r.display,
+          label: opacity === 100 ? "full" : `${opacity}%`,
+        });
+      });
+      if (el.valueStripHint) {
+        el.valueStripHint.textContent =
+          "Body / covering power: thin glaze → solid mass-tone.";
+      }
+    }
+
+    el.valueStrip.innerHTML = steps
+      .map(
+        (s) =>
+          `<div class="value-step" title="${escapeHtml(s.hex)}">
+            <div class="chip" style="background:${s.hex}"></div>
+            <span class="lbl">${escapeHtml(s.label)}</span>
+          </div>`
+      )
+      .join("");
   }
 
   function renderGlaze() {
@@ -1075,6 +1412,22 @@
 
   // ——— Events ———
   function bindEvents() {
+    if (el.hueWheel) {
+      el.hueWheel.addEventListener("click", (e) => {
+        handleWheelPointer(e.clientX, e.clientY);
+      });
+    }
+    if (el.wheelSuggestions) {
+      el.wheelSuggestions.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-sug-hex]");
+        if (!btn) return;
+        addToMix({
+          name: btn.dataset.sugName || "Wheel pick",
+          hex: btn.dataset.sugHex,
+        });
+      });
+    }
+
     $$(".mode-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const next = btn.dataset.mode;

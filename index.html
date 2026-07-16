@@ -19,6 +19,11 @@
     <div class="brand">
       <h1>Colour Mixer</h1>
       <p class="tagline">Plan mixes · glaze · match</p>
+      <p class="sister-link">
+        Sister tool:
+        <a href="https://hueandcry.naklitechie.com/" target="_blank" rel="noopener">Hue &amp; Cry</a>
+        — Sanzo Wada combinations from a photo
+      </p>
     </div>
 
     <div class="mode-toggle" role="group" aria-label="Paint medium">
@@ -156,6 +161,33 @@
       </div>
     </section>
 
+    <!-- Reference: wheel + value strip -->
+    <section class="panel reference-panel" aria-labelledby="reference-heading">
+      <div class="panel-head">
+        <h2 id="reference-heading">Reference</h2>
+      </div>
+      <p class="hint">Live hue placement and a value strip for planning washes / body — not a full theory course.</p>
+
+      <div class="ref-grid">
+        <div class="wheel-block">
+          <h3 class="ref-subhead">Hue wheel</h3>
+          <div class="wheel-stage">
+            <canvas id="hue-wheel" width="280" height="280" role="img" aria-label="Hue wheel. Click to set a target hue."></canvas>
+          </div>
+          <p class="wheel-readout" id="wheel-readout">Add paints to place your mix on the wheel.</p>
+          <p class="micro">● mix · ◦ tubes · + click target. Nearest limited-palette paints appear below.</p>
+          <div id="wheel-suggestions" class="wheel-suggestions"></div>
+        </div>
+
+        <div class="value-block">
+          <h3 class="ref-subhead">Value strip</h3>
+          <p class="micro" id="value-strip-hint">Same mix at lighter → fuller strength (water or body).</p>
+          <div id="value-strip" class="value-strip" aria-label="Value steps of current mix"></div>
+          <div class="temp-chip" id="temp-chip" hidden></div>
+        </div>
+      </div>
+    </section>
+
     <!-- Glaze -->
     <section class="panel glaze-panel" aria-labelledby="glaze-heading">
       <div class="panel-head">
@@ -243,7 +275,13 @@
       <a href="https://github.com/rvanwijnen/spectral.js" target="_blank" rel="noopener">spectral.js</a>
       (Kubelka–Munk). Approximate guidance for planning — real tubes and inks vary by brand and batch.
     </p>
-    <p class="footer-host">mixer.naklitechie.com</p>
+    <p class="footer-links">
+      <a href="https://hueandcry.naklitechie.com/">Hue &amp; Cry</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/NakliTechie/colour-mixer">Source</a>
+      <span aria-hidden="true">·</span>
+      <span class="footer-host">mixer.naklitechie.com</span>
+    </p>
   </footer>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
