@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#2c3e50" />
   <title>Colour Mixer — Paint &amp; Ink</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='12' cy='14' r='8' fill='%232B4C9B'/%3E%3Ccircle cx='20' cy='18' r='8' fill='%23F2B705' opacity='0.9'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="css/styles.css?v=10" />
+  <link rel="stylesheet" href="css/styles.css?v=11" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
@@ -170,27 +170,27 @@
           <div class="light-preview-block">
             <div class="light-preview-row">
               <span class="micro">Viewing light</span>
-              <div class="seg-toggle" role="group" aria-label="Preview light">
-                <button type="button" class="seg-btn is-active" data-light="day">Daylight</button>
-                <button type="button" class="seg-btn" data-light="warm">Warm lamp</button>
-                <button type="button" class="seg-btn" data-light="cool">Cool / north</button>
+              <div class="seg-toggle" role="group" aria-label="CIE illuminant">
+                <button type="button" class="seg-btn is-active" data-light="day" title="CIE D65">D65</button>
+                <button type="button" class="seg-btn" data-light="warm" title="CIE Illuminant A · 2856 K">A · warm</button>
+                <button type="button" class="seg-btn" data-light="cool" title="CIE D75 · cool daylight">D75 · cool</button>
               </div>
             </div>
-            <div class="light-strip" id="light-strip" aria-label="Mix under three illuminants">
+            <div class="light-strip" id="light-strip" aria-label="Mix under CIE illuminants">
               <div class="light-cell">
                 <div class="light-sw" id="light-sw-day"></div>
-                <span>D65 day</span>
+                <span>D65</span>
               </div>
               <div class="light-cell">
                 <div class="light-sw" id="light-sw-warm"></div>
-                <span>~2700K</span>
+                <span>A 2856K</span>
               </div>
               <div class="light-cell">
                 <div class="light-sw" id="light-sw-cool"></div>
-                <span>Cool</span>
+                <span>D75</span>
               </div>
             </div>
-            <p class="micro" id="light-note">Illuminant preview (approx.) — not a spectrophotometer.</p>
+            <p class="micro" id="light-note">CIE spectral illuminants · 1931 2° observer · Bradford CAT to sRGB.</p>
           </div>
           <div class="row-actions result-actions">
             <button type="button" class="btn btn-primary" id="save-mix" disabled>Save</button>
@@ -398,9 +398,10 @@
   <!-- Print-only palette chart -->
   <div id="print-chart-root" class="print-chart-root" aria-hidden="true"></div>
 
-  <script src="vendor/spectral.min.js?v=10"></script>
-  <script src="js/palettes.js?v=10"></script>
-  <script src="js/app.js?v=10"></script>
-  <script src="js/studio.js?v=10"></script>
+  <script src="vendor/spectral.min.js?v=11"></script>
+  <script src="js/illuminants.js?v=11"></script>
+  <script src="js/palettes.js?v=11"></script>
+  <script src="js/app.js?v=11"></script>
+  <script src="js/studio.js?v=11"></script>
 </body>
 </html>

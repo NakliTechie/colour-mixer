@@ -173,93 +173,21 @@
       .join("");
   }
 
-  // ——— Light preview (multi-illuminant, linear-RGB gains) ———
+  // ——— Light preview (lab-grade CIE illuminants) ———
   let lightMode = "day";
 
-  /** Approximate RGB gains for common viewing lights (planning only). */
-  const ILLUMINANTS = {
-    day: {
-      label: "Daylight (D65-ish)",
-      gains: [1.0, 1.0, 1.0],
-      groundTint: [1, 1, 1],
-    },
-    warm: {
-      label: "Warm lamp (~2700K)",
-      // tungsten: strong R, weak B
-      gains: [1.28, 1.06, 0.62],
-      groundTint: [1.08, 1.02, 0.88],
-    },
-    cool: {
-      label: "Cool / north light",
-      gains: [0.82, 0.94, 1.22],
-      groundTint: [0.94, 0.97, 1.06],
-    },
-  };
-
-  function srgbToLinear(c) {
-    c = c / 255;
-    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  function lab() {
+    return typeof LabIlluminants !== "undefined" ? LabIlluminants : null;
   }
 
-  function linearToSrgb(c) {
-    c = clamp(c, 0, 1);
-    const v =
-      c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
-    return Math.round(clamp(v, 0, 1) * 255);
-  }
-
-  function rgbToHexLocal(r, g, b) {
-    const to = (v) =>
-      clamp(Math.round(v), 0, 255)
-        .toString(16)
-        .padStart(2, "0");
-    return `#${to(r)}${to(g)}${to(b)}`.toUpperCase();
-  }
-
-  /**
-   * Simulate mix colour under an illuminant.
-   * Multiplies linear RGB by gains, optionally tints ground then recomposites.
-   */
-  function simulateUnderLight(displayHex, groundHex, illuminantKey, alpha) {
-    const M = core();
-    const ill = ILLUMINANTS[illuminantKey] || ILLUMINANTS.day;
-    const [gr, gg, gb] = ill.gains;
-    const [tr, tg, tb] = ill.groundTint;
-
-    const applyGains = (hex, useGroundTint) => {
-      if (!M) return hex;
-      const { r, g, b } = M.hexToRgb(M.normalizeHex(hex));
-      let lr = srgbToLinear(r);
-      let lg = srgbToLinear(g);
-      let lb = srgbToLinear(b);
-      if (useGroundTint) {
-        lr *= tr;
-        lg *= tg;
-        lb *= tb;
-      } else {
-        lr *= gr;
-        lg *= gg;
-        lb *= gb;
-      }
-      // Mild luminance normalize so warm/cool don't just look darker
-      const y0 = 0.2126 * srgbToLinear(r) + 0.7152 * srgbToLinear(g) + 0.0722 * srgbToLinear(b);
-      const y1 = 0.2126 * lr + 0.7152 * lg + 0.0722 * lb;
-      if (y1 > 1e-6 && illuminantKey !== "day") {
-        const scale = Math.pow(y0 / y1, 0.35); // partial restore
-        lr *= scale;
-        lg *= scale;
-        lb *= scale;
-      }
-      return rgbToHexLocal(linearToSrgb(lr), linearToSrgb(lg), linearToSrgb(lb));
-    };
-
-    const litPaint = applyGains(displayHex, false);
-    if (!groundHex || alpha == null || alpha >= 0.98) {
-      return litPaint;
+  function simulateUnderLight(displayHex, groundHex, uiMode, alpha) {
+    const L = lab();
+    if (L && L.underIlluminant) {
+      const key = L.uiToKey(uiMode);
+      return L.underIlluminant(displayHex, key, groundHex, alpha);
     }
-    // Paper/canvas also shifts under the lamp
-    const litGround = applyGains(groundHex, true);
-    return M.compositeOver(litGround, litPaint, clamp(alpha, 0, 1));
+    // Fallback: return unchanged if module missing
+    return displayHex;
   }
 
   function applyLightPreview(detail) {
@@ -272,14 +200,15 @@
     const display = detail.result.display;
     const ground = core() ? core().groundHex() : "#FFFEFA";
     const alpha = detail.result.alpha != null ? detail.result.alpha : 1;
+    const L = lab();
 
     const day = simulateUnderLight(display, ground, "day", alpha);
     const warm = simulateUnderLight(display, ground, "warm", alpha);
     const cool = simulateUnderLight(display, ground, "cool", alpha);
 
     const setSw = (id, hex) => {
-      const el = $(id);
-      if (el) el.style.backgroundColor = hex;
+      const node = $(id);
+      if (node) node.style.backgroundColor = hex;
     };
     setSw("#light-sw-day", day);
     setSw("#light-sw-warm", warm);
@@ -287,23 +216,18 @@
 
     const main =
       lightMode === "warm" ? warm : lightMode === "cool" ? cool : day;
-    const litG =
-      lightMode === "day"
-        ? ground
-        : simulateUnderLight(ground, ground, lightMode, 1);
+    // Ground under same illuminant (full cover)
+    const litG = simulateUnderLight(ground, ground, lightMode, 1);
 
     if (stage) {
-      stage.style.filter = ""; // no CSS filter hacks
+      stage.style.filter = "";
       stage.style.backgroundColor = main;
       stage.classList.remove("light-day", "light-warm", "light-cool");
       stage.classList.add("light-" + lightMode);
     }
-    if (groundEl) {
-      groundEl.style.backgroundColor = litG;
-    }
+    if (groundEl) groundEl.style.backgroundColor = litG;
     if (sticky) sticky.style.backgroundColor = main;
 
-    // Mark active cell
     document.querySelectorAll(".light-cell").forEach((cell) => {
       cell.classList.remove("is-active");
     });
@@ -313,14 +237,29 @@
         : lightMode === "cool"
           ? "light-sw-cool"
           : "light-sw-day";
-    const activeSw = $(`#${activeId}`);
+    const activeSw = document.getElementById(activeId);
     if (activeSw && activeSw.parentElement) {
       activeSw.parentElement.classList.add("is-active");
     }
 
     if (note) {
-      const ill = ILLUMINANTS[lightMode];
-      note.textContent = `${ill.label} — linear RGB illuminant gains (planning approx., not lab measurement).`;
+      if (L && L.metaForUi) {
+        const m = L.metaForUi(lightMode);
+        const wp = L.WHITE[L.uiToKey(lightMode)];
+        const xy = wp
+          ? (() => {
+              const [X, Y, Z] = wp.xyz;
+              const s = X + Y + Z;
+              return s > 0
+                ? `x=${(X / s).toFixed(4)}, y=${(Y / s).toFixed(4)}`
+                : "";
+            })()
+          : "";
+        note.textContent = `${m.label} (${m.cct}) · ${m.note} · white ${xy} · spectral R×SPD×CIE 1931 2° · Bradford→sRGB`;
+      } else {
+        note.textContent =
+          "Lab illuminants module not loaded — showing unshifted colour.";
+      }
     }
   }
 
