@@ -4,11 +4,12 @@ Single-page planning tool for **watercolour**, **gouache**, **acrylic**, **oil**
 
 - Pigment-aware blending via [spectral.js](https://github.com/rvanwijnen/spectral.js) (Kubelka–Munk)
 - Five mediums with medium-specific controls, grounds, and tips
-- Limited palette · **40 brand lines** · common names · free custom pickers
+- Limited palette · **40 brand lines** · common names · saved sets · free pickers
 - Mix recipes with parts + water/dilution, white/black, body
-- Glaze stack over paper/canvas/linen grounds
-- Photo sample + suggested matches
-- Mode-aware tips and local history
+- Hue wheel (harmony rings) · value strip · mud score · light preview
+- Mixing chart · recipe card export · printable palette chart
+- Compare A/B · share link + QR · undo/redo
+- Glaze stack · photo match · tips · history
 
 **Host:** `https://mixer.naklitechie.com`  
 **Repo:** https://github.com/NakliTechie/colour-mixer  

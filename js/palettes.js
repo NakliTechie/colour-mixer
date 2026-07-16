@@ -10,6 +10,9 @@ window.PAINT_PALETTES = {
       hex: "#F5D031",
       family: "yellow",
       note: "Cool yellow — clean greens with phthalo",
+      opacity: "transparent",
+      staining: "med",
+      granulating: false,
     },
     {
       id: "cad-y",
@@ -17,6 +20,9 @@ window.PAINT_PALETTES = {
       hex: "#F2B705",
       family: "yellow",
       note: "Warm yellow — oranges with warm red",
+      opacity: "opaque",
+      staining: "low",
+      granulating: false,
     },
     {
       id: "pyrrole-r",
@@ -24,6 +30,9 @@ window.PAINT_PALETTES = {
       hex: "#E23C28",
       family: "red",
       note: "Warm red — lively oranges",
+      opacity: "semi",
+      staining: "med",
+      granulating: false,
     },
     {
       id: "quin-rose",
@@ -31,6 +40,9 @@ window.PAINT_PALETTES = {
       hex: "#C4356A",
       family: "red",
       note: "Cool red/magenta — clean purples",
+      opacity: "transparent",
+      staining: "high",
+      granulating: false,
     },
     {
       id: "ultra-b",
@@ -38,6 +50,9 @@ window.PAINT_PALETTES = {
       hex: "#2B4C9B",
       family: "blue",
       note: "Warm blue — violets with rose",
+      opacity: "transparent",
+      staining: "low",
+      granulating: true,
     },
     {
       id: "phthalo-b",
@@ -45,6 +60,9 @@ window.PAINT_PALETTES = {
       hex: "#0A4D8C",
       family: "blue",
       note: "Cool blue — strong tinting; use sparingly",
+      opacity: "transparent",
+      staining: "high",
+      granulating: false,
     },
     {
       id: "burnt-s",
@@ -52,6 +70,9 @@ window.PAINT_PALETTES = {
       hex: "#8A3B1E",
       family: "earth",
       note: "Warm earth — neutrals with ultramarine",
+      opacity: "semi",
+      staining: "med",
+      granulating: true,
     },
     {
       id: "yellow-o",
@@ -59,6 +80,9 @@ window.PAINT_PALETTES = {
       hex: "#C9953B",
       family: "earth",
       note: "Muted yellow earth",
+      opacity: "opaque",
+      staining: "low",
+      granulating: true,
     },
     {
       id: "paynes",
@@ -66,6 +90,9 @@ window.PAINT_PALETTES = {
       hex: "#3D4A5C",
       family: "neutral",
       note: "Cool dark — softer than black",
+      opacity: "semi",
+      staining: "med",
+      granulating: false,
     },
   ],
 

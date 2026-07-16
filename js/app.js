@@ -52,6 +52,13 @@
   };
 
   let wheelDrawn = false;
+  let showHarmonyRings = true;
+  let paintTagRenderer = null;
+
+  // Undo / redo stacks
+  const undoStack = [];
+  const redoStack = [];
+  const MAX_UNDO = 40;
 
   function usesWhiteBlack() {
     return state.mode === "acrylic" || state.mode === "oil" || state.mode === "gouache";
@@ -130,6 +137,7 @@
     brandSelect: $("#brand-select"),
     brandMeta: $("#brand-meta"),
     paletteNamed: $("#palette-named"),
+    paletteSaved: $("#palette-saved"),
     paletteCustom: $("#palette-custom"),
     customSwatches: $("#custom-swatches"),
     customColor: $("#custom-color"),
@@ -750,7 +758,9 @@
         opts.showPigment && paint.pigment
           ? `<span class="pigment">${escapeHtml(paint.pigment)}</span>`
           : "";
-      btn.innerHTML = `<span class="chip" style="background:${normalizeHex(paint.hex)}"></span><span class="label">${escapeHtml(paint.name)}${pigmentHtml}</span>`;
+      const tagsHtml =
+        typeof paintTagRenderer === "function" ? paintTagRenderer(paint) : "";
+      btn.innerHTML = `<span class="chip" style="background:${normalizeHex(paint.hex)}"></span><span class="label">${escapeHtml(paint.name)}${pigmentHtml}${tagsHtml}</span>`;
       btn.addEventListener("click", () => {
         // When adding brand paint, include brand in the slot name if useful
         const mixPaint = { ...paint };
@@ -845,9 +855,76 @@
 
     renderHueWheel(result);
     renderValueStrip();
+
+    document.dispatchEvent(
+      new CustomEvent("mixer:update", {
+        detail: {
+          slots: state.slots.map((s) => ({ ...s })),
+          result,
+          mode: state.mode,
+        },
+      })
+    );
+  }
+
+  function snapshotState() {
+    return {
+      mode: state.mode,
+      slots: state.slots.map((s) => ({ ...s })),
+      water: state.water,
+      white: state.white,
+      black: state.black,
+      opacity: state.opacity,
+      ground: state.ground,
+      glaze: state.glaze.map((g) => ({ ...g })),
+    };
+  }
+
+  function pushUndo() {
+    undoStack.push(snapshotState());
+    if (undoStack.length > MAX_UNDO) undoStack.shift();
+    redoStack.length = 0;
+  }
+
+  function applySnapshot(snap) {
+    if (!snap) return;
+    state.mode = MODES.includes(snap.mode) ? snap.mode : state.mode;
+    state.slots = (snap.slots || []).map((s) => ({ ...s }));
+    state.water = snap.water ?? state.water;
+    state.white = snap.white ?? state.white;
+    state.black = snap.black ?? state.black;
+    state.opacity = snap.opacity ?? state.opacity;
+    if (snap.ground) state.ground = snap.ground;
+    if (snap.glaze) state.glaze = snap.glaze.map((g) => ({ ...g }));
+    if (el.waterSlider) el.waterSlider.value = String(state.water);
+    if (el.whiteSlider) el.whiteSlider.value = String(state.white);
+    if (el.blackSlider) el.blackSlider.value = String(state.black);
+    if (el.opacitySlider) el.opacitySlider.value = String(state.opacity);
+    if (el.groundSelect) el.groundSelect.value = state.ground;
+    renderMode();
+  }
+
+  function undo() {
+    if (!undoStack.length) return;
+    redoStack.push(snapshotState());
+    applySnapshot(undoStack.pop());
+    toast("Undo");
+  }
+
+  function redo() {
+    if (!redoStack.length) return;
+    undoStack.push(snapshotState());
+    applySnapshot(redoStack.pop());
+    toast("Redo");
+  }
+
+  function clearSlotsOnly() {
+    state.slots = [];
+    renderAll();
   }
 
   function trySampleMix() {
+    pushUndo();
     state.mode = "watercolour";
     state.slots = [];
     state.water = 40;
@@ -1009,6 +1086,36 @@
         ctx.moveTo(x, y - 10);
         ctx.lineTo(x, y + 10);
         ctx.stroke();
+      }
+    }
+
+    // Harmony rings for current mix
+    if (showHarmonyRings && state.slots.length) {
+      const hsl = hexToHsl(result.display);
+      if (hsl.s >= 0.08) {
+        const ringAt = (hue, color, width) => {
+          const ang = (hue * Math.PI) / 180;
+          const x = cx + Math.cos(ang) * rMid;
+          const y = cy + Math.sin(ang) * rMid;
+          ctx.beginPath();
+          ctx.arc(x, y, 11, 0, Math.PI * 2);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = width || 1.5;
+          ctx.setLineDash([3, 3]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        };
+        // analogous band
+        ctx.beginPath();
+        ctx.strokeStyle = "rgba(28,26,23,0.2)";
+        ctx.lineWidth = 6;
+        const start = ((hsl.h - 30) * Math.PI) / 180;
+        const end = ((hsl.h + 30) * Math.PI) / 180;
+        ctx.arc(cx, cy, rMid, start, end);
+        ctx.stroke();
+        ringAt((hsl.h + 180) % 360, "rgba(28,26,23,0.45)", 2);
+        ringAt((hsl.h + 120) % 360, "rgba(43,76,155,0.5)", 1.5);
+        ringAt((hsl.h + 240) % 360, "rgba(43,76,155,0.5)", 1.5);
       }
     }
 
@@ -1231,11 +1338,12 @@
   }
 
   // ——— Actions ———
-  function addToMix(paint) {
+  function addToMix(paint, opts = {}) {
     if (state.slots.length >= MAX_SLOTS) {
       toast(`Max ${MAX_SLOTS} paints in a mix`);
       return;
     }
+    if (!opts.skipUndo) pushUndo();
     // If same paint already in mix, bump parts
     const existing = state.slots.find(
       (s) => s.hex.toLowerCase() === normalizeHex(paint.hex).toLowerCase() && s.name === paint.name
@@ -1255,6 +1363,7 @@
   }
 
   function clearMix() {
+    pushUndo();
     state.slots = [];
     state.water = 40;
     state.white = 0;
@@ -1526,6 +1635,7 @@
           limited: el.paletteLimited,
           brands: el.paletteBrands,
           named: el.paletteNamed,
+          saved: el.paletteSaved,
           custom: el.paletteCustom,
         };
         Object.entries(panels).forEach(([key, node]) => {
@@ -1536,15 +1646,19 @@
         });
         const hints = {
           limited:
-            "Tap a paint to add it to the mix. Split-primary + earths — a classic planning set.",
+            "Tap a paint to add it to the mix. Tags: opacity · staining · granulating.",
           brands:
             "Popular brand lines (W&N, Daniel Smith, Schmincke, Golden…). Hexes ≈ mass-tones for planning only.",
           named:
             "Generic common names. Prefer Brands when you know your tube manufacturer.",
+          saved: "Your named tube sets — load one paint or the whole set into the mix.",
           custom:
             "Free pickers for any colour. Long-press / right-click a custom swatch to remove it.",
         };
         el.paletteHint.textContent = hints[which] || hints.limited;
+        if (which === "saved") {
+          document.dispatchEvent(new CustomEvent("mixer:saved-tab"));
+        }
       });
     });
 
@@ -1566,6 +1680,19 @@
       });
     }
 
+    let partsUndoArmed = false;
+    el.mixSlots.addEventListener("pointerdown", (e) => {
+      if (e.target.matches("input[type=range][data-slot-index]")) {
+        if (!partsUndoArmed) {
+          pushUndo();
+          partsUndoArmed = true;
+        }
+      }
+    });
+    el.mixSlots.addEventListener("pointerup", () => {
+      partsUndoArmed = false;
+    });
+
     el.mixSlots.addEventListener("input", (e) => {
       const t = e.target;
       if (t.matches("input[type=range][data-slot-index]")) {
@@ -1573,7 +1700,6 @@
         if (state.slots[i]) {
           state.slots[i].parts = Number(t.value);
           renderResult();
-          // update label without full re-render of slots (keeps focus)
           const val = t.parentElement.querySelector(".parts-val");
           if (val) {
             const p = state.slots[i].parts;
@@ -1587,9 +1713,15 @@
       const btn = e.target.closest("[data-remove]");
       if (!btn) return;
       const i = Number(btn.dataset.remove);
+      pushUndo();
       state.slots.splice(i, 1);
       renderAll();
     });
+
+    el.waterSlider.addEventListener("pointerdown", () => pushUndo());
+    el.whiteSlider.addEventListener("pointerdown", () => pushUndo());
+    el.blackSlider.addEventListener("pointerdown", () => pushUndo());
+    el.opacitySlider.addEventListener("pointerdown", () => pushUndo());
 
     el.waterSlider.addEventListener("input", () => {
       state.water = Number(el.waterSlider.value);
@@ -1764,6 +1896,35 @@
     renderPalettes();
     renderAll();
   }
+
+  // Public API for studio.js
+  window.MixerCore = {
+    getState: () => state,
+    computeDisplayedResult,
+    mixPigments,
+    compositeOver,
+    groundHex,
+    hexToHsl,
+    hexToRgb,
+    normalizeHex,
+    toast,
+    addToMix,
+    pushUndo,
+    undo,
+    redo,
+    canUndo: () => undoStack.length > 0,
+    canRedo: () => redoStack.length > 0,
+    applySnapshot,
+    clearSlotsOnly,
+    setHarmonyRings: (on) => {
+      showHarmonyRings = !!on;
+      renderHueWheel(computeDisplayedResult());
+    },
+    setPaintTagRenderer: (fn) => {
+      paintTagRenderer = fn;
+      renderPalettes();
+    },
+  };
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
