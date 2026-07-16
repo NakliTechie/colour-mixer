@@ -10,7 +10,9 @@
   const CUSTOM_KEY = "colour-mixer-custom-v1";
   const MAX_HISTORY = 24;
 
-  /** @type {{ mode: 'watercolour'|'acrylic', slots: MixSlot[], water: number, white: number, black: number, opacity: number, glaze: GlazeLayer[], ground: string, tipIndex: number, custom: Paint[], sampleHex: string|null }} */
+  const BRAND_KEY = "colour-mixer-brand-v1";
+
+  /** @type {{ mode: 'watercolour'|'acrylic', slots: MixSlot[], water: number, white: number, black: number, opacity: number, glaze: GlazeLayer[], ground: string, tipIndex: number, custom: Paint[], sampleHex: string|null, brandId: string }} */
   const state = {
     mode: "watercolour",
     slots: [],
@@ -23,6 +25,7 @@
     tipIndex: 0,
     custom: loadJSON(CUSTOM_KEY, []),
     sampleHex: null,
+    brandId: localStorage.getItem(BRAND_KEY) || "wn-pwc",
   };
 
   /**
@@ -67,6 +70,10 @@
     clearGlaze: $("#clear-glaze"),
     groundSelect: $("#ground-select"),
     paletteLimited: $("#palette-limited"),
+    paletteBrands: $("#palette-brands"),
+    paletteBrandGrid: $("#palette-brand-grid"),
+    brandSelect: $("#brand-select"),
+    brandMeta: $("#brand-meta"),
     paletteNamed: $("#palette-named"),
     paletteCustom: $("#palette-custom"),
     customSwatches: $("#custom-swatches"),
@@ -399,9 +406,80 @@
       state.ground = "paper-white";
       el.groundSelect.value = "paper-white";
     }
+    // Ensure selected brand is valid for this medium
+    const brands = brandsForMode();
+    if (brands.length && !brands.some((b) => b.id === state.brandId)) {
+      state.brandId = brands[0].id;
+      try {
+        localStorage.setItem(BRAND_KEY, state.brandId);
+      } catch {
+        /* ignore */
+      }
+    }
     renderTip();
     renderPalettes();
     renderAll();
+  }
+
+  function brandsForMode() {
+    const list = window.BRAND_PALETTES || [];
+    return list.filter((b) => {
+      if (b.medium === "both") return true;
+      if (state.mode === "watercolour") return b.medium === "watercolour";
+      return b.medium === "acrylic";
+    });
+  }
+
+  function currentBrand() {
+    const brands = brandsForMode();
+    let brand = brands.find((b) => b.id === state.brandId);
+    if (!brand) {
+      brand = brands[0] || null;
+      if (brand) state.brandId = brand.id;
+    }
+    return brand;
+  }
+
+  function renderBrandSelect() {
+    if (!el.brandSelect) return;
+    const brands = brandsForMode();
+    el.brandSelect.innerHTML = brands
+      .map(
+        (b) =>
+          `<option value="${escapeHtml(b.id)}">${escapeHtml(b.brand)} — ${escapeHtml(b.line)}</option>`
+      )
+      .join("");
+    const brand = currentBrand();
+    if (brand) {
+      el.brandSelect.value = brand.id;
+      el.brandMeta.textContent = brand.note
+        ? `${brand.note} · approx. mass-tones for planning`
+        : "Approximate mass-tones for planning — not brand-certified.";
+    } else {
+      el.brandMeta.textContent = "No brand lines for this medium.";
+    }
+  }
+
+  function renderBrandGrid() {
+    const brand = currentBrand();
+    if (!brand || !el.paletteBrandGrid) {
+      if (el.paletteBrandGrid) el.paletteBrandGrid.innerHTML = "";
+      return;
+    }
+    const paints = brand.paints
+      .filter((p) => !(state.mode === "watercolour" && p.acrylicOnly))
+      .map((p) => ({
+        ...p,
+        id: p.id || `${brand.id}-${p.name}`,
+        name: p.name,
+        // Prefix brand short name in mix recipe for clarity
+        displayBrand: brand.brand,
+        brandLine: brand.line,
+      }));
+    paintGrid(el.paletteBrandGrid, paints, false, {
+      showPigment: true,
+      brandLabel: `${brand.brand} ${brand.line}`,
+    });
   }
 
   function renderPalettes() {
@@ -412,19 +490,41 @@
     });
     paintGrid(el.paletteNamed, named);
     paintGrid(el.customSwatches, state.custom, true);
+    renderBrandSelect();
+    renderBrandGrid();
   }
 
-  function paintGrid(container, paints, isCustom = false) {
+  function paintGrid(container, paints, isCustom = false, opts = {}) {
+    if (!container) return;
     container.innerHTML = "";
     paints.forEach((paint) => {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "swatch-btn";
-      btn.title = [paint.name, paint.note || paint.brandish || "", paint.hex]
-        .filter(Boolean)
-        .join(" — ");
-      btn.innerHTML = `<span class="chip" style="background:${normalizeHex(paint.hex)}"></span><span class="label">${escapeHtml(paint.name)}</span>`;
-      btn.addEventListener("click", () => addToMix(paint));
+      const bits = [
+        paint.name,
+        paint.pigment,
+        paint.note || paint.brandish || "",
+        opts.brandLabel,
+        paint.hex,
+      ].filter(Boolean);
+      btn.title = bits.join(" — ");
+      const pigmentHtml =
+        opts.showPigment && paint.pigment
+          ? `<span class="pigment">${escapeHtml(paint.pigment)}</span>`
+          : "";
+      btn.innerHTML = `<span class="chip" style="background:${normalizeHex(paint.hex)}"></span><span class="label">${escapeHtml(paint.name)}${pigmentHtml}</span>`;
+      btn.addEventListener("click", () => {
+        // When adding brand paint, include brand in the slot name if useful
+        const mixPaint = { ...paint };
+        if (paint.displayBrand && !paint.name.includes(paint.displayBrand)) {
+          // Keep short tube name for recipe readability; brand is in title
+          mixPaint.note = [paint.displayBrand, paint.brandLine, paint.note]
+            .filter(Boolean)
+            .join(" · ");
+        }
+        addToMix(mixPaint);
+      });
       if (isCustom) {
         btn.addEventListener("contextmenu", (e) => {
           e.preventDefault();
@@ -724,8 +824,15 @@
   }
 
   function allPalettePaints() {
+    const brand = currentBrand();
+    const brandPaints = brand
+      ? brand.paints
+          .filter((p) => !(state.mode === "watercolour" && p.acrylicOnly))
+          .map((p) => ({ ...p, name: p.name }))
+      : [];
     return [
       ...window.PAINT_PALETTES.limited,
+      ...brandPaints,
       ...window.PAINT_PALETTES.named.filter(
         (p) => !(state.mode === "watercolour" && p.acrylicOnly)
       ),
@@ -817,20 +924,49 @@
           t.setAttribute("aria-selected", t === tab ? "true" : "false");
         });
         const which = tab.dataset.paletteTab;
-        el.paletteLimited.hidden = which !== "limited";
-        el.paletteNamed.hidden = which !== "named";
-        el.paletteCustom.hidden = which !== "custom";
-        el.paletteLimited.classList.toggle("hidden", which !== "limited");
-        el.paletteNamed.classList.toggle("hidden", which !== "named");
-        el.paletteCustom.classList.toggle("hidden", which !== "custom");
+        const panels = {
+          limited: el.paletteLimited,
+          brands: el.paletteBrands,
+          named: el.paletteNamed,
+          custom: el.paletteCustom,
+        };
+        Object.entries(panels).forEach(([key, node]) => {
+          if (!node) return;
+          const show = key === which;
+          node.hidden = !show;
+          node.classList.toggle("hidden", !show);
+        });
         const hints = {
-          limited: "Tap a paint to add it to the mix. Split-primary + earths — a classic planning set.",
-          named: "Broader tube-like names for planning. Hexes are approximate mass-tones, not brand-certified.",
-          custom: "Free pickers for any colour. Right-click a custom swatch to remove it.",
+          limited:
+            "Tap a paint to add it to the mix. Split-primary + earths — a classic planning set.",
+          brands:
+            "Popular brand lines (W&N, Daniel Smith, Schmincke, Golden…). Hexes ≈ mass-tones for planning only.",
+          named:
+            "Generic common names. Prefer Brands when you know your tube manufacturer.",
+          custom:
+            "Free pickers for any colour. Long-press / right-click a custom swatch to remove it.",
         };
         el.paletteHint.textContent = hints[which] || hints.limited;
       });
     });
+
+    if (el.brandSelect) {
+      el.brandSelect.addEventListener("change", () => {
+        state.brandId = el.brandSelect.value;
+        try {
+          localStorage.setItem(BRAND_KEY, state.brandId);
+        } catch {
+          /* ignore */
+        }
+        renderBrandGrid();
+        const brand = currentBrand();
+        if (brand) {
+          el.brandMeta.textContent = brand.note
+            ? `${brand.note} · approx. mass-tones for planning`
+            : "Approximate mass-tones for planning — not brand-certified.";
+        }
+      });
+    }
 
     el.mixSlots.addEventListener("input", (e) => {
       const t = e.target;

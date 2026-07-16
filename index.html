@@ -38,13 +38,22 @@
         <h2 id="palette-heading">Palette</h2>
         <div class="tabs" role="tablist" aria-label="Palette source">
           <button type="button" class="tab is-active" role="tab" aria-selected="true" data-palette-tab="limited">Limited</button>
-          <button type="button" class="tab" role="tab" aria-selected="false" data-palette-tab="named">Named paints</button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-palette-tab="brands">Brands</button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-palette-tab="named">Common</button>
           <button type="button" class="tab" role="tab" aria-selected="false" data-palette-tab="custom">Custom</button>
         </div>
       </div>
 
       <div class="palette-body">
         <div id="palette-limited" class="palette-grid" role="tabpanel"></div>
+        <div id="palette-brands" class="brands-panel hidden" role="tabpanel" hidden>
+          <label class="field-label brand-select-label" for="brand-select">
+            Brand line
+          </label>
+          <select id="brand-select" aria-label="Brand palette"></select>
+          <p class="brand-meta" id="brand-meta"></p>
+          <div id="palette-brand-grid" class="palette-grid"></div>
+        </div>
         <div id="palette-named" class="palette-grid hidden" role="tabpanel" hidden></div>
         <div id="palette-custom" class="custom-palette hidden" role="tabpanel" hidden>
           <label class="field-label">
