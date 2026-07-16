@@ -1484,6 +1484,149 @@ window.GROUNDS = {
   "toned-panel": { name: "Toned panel (warm)", hex: "#C4A882" },
 };
 
+/**
+ * Infer opacity / staining / granulating for planning tags.
+ * Uses pigment codes when present, else name heuristics. Explicit fields win.
+ * Approximate — real tubes vary by brand and grind.
+ */
+window.inferPaintTraits = function inferPaintTraits(paint) {
+  if (!paint || typeof paint !== "object") return paint;
+  const name = String(paint.name || "").toLowerCase();
+  const pigment = String(paint.pigment || "").toUpperCase();
+  let opacity = paint.opacity || null;
+  let staining = paint.staining || null;
+  let granulating =
+    typeof paint.granulating === "boolean" ? paint.granulating : null;
+
+  // —— Pigment codes (Colour Index) ——
+  if (pigment) {
+    // High-stain transparent modern organics
+    if (
+      /PB15|PG7|PG36|PR122|PV19|PV23|PY3|PY150|PY151|PY175|PY110|PO73|PR255|PR254|PR177|PR206|PB27/.test(
+        pigment
+      )
+    ) {
+      if (!opacity) opacity = "transparent";
+      if (!staining) {
+        staining = /PB15|PG7|PG36|PR122|PV23|PY3|PB27/.test(pigment)
+          ? "high"
+          : "med";
+      }
+      if (granulating === null) granulating = false;
+    }
+    // Cadmiums / titanium / carbon — opaque, low stain
+    if (/PY35|PR108|PO20|PW6|PW4|PBk7|PBk9|PBk6|PBk11/.test(pigment)) {
+      if (!opacity) opacity = /PW4|CERULEAN/i.test(pigment) ? "semi" : "opaque";
+      if (!staining) staining = "low";
+      if (granulating === null) granulating = false;
+    }
+    // Earths / ultramarine — often granulating
+    if (/PB29|PBr7|PY42|PY43|PR101|PR102|PB28|PB35|PB36|PG18|PV14|PV16/.test(pigment)) {
+      if (!opacity) {
+        opacity = /PB28|PB35|PB36|PG18|PV14/.test(pigment)
+          ? "semi"
+          : /PB29|PBr7|PY43|PR101/.test(pigment)
+            ? "semi"
+            : "semi";
+      }
+      if (!staining) staining = /PB29|PG18/.test(pigment) ? "low" : "med";
+      if (granulating === null) {
+        granulating = /PB29|PBr7|PY43|PR101|PV14|PV16|PB35|PB36/.test(pigment);
+      }
+    }
+  }
+
+  // —— Name heuristics (fill gaps) ——
+  if (!opacity || !staining || granulating === null) {
+    if (
+      /phthalo|quinacridone|winsor (blue|green|violet|lemon|yellow|orange|red)|dioxazine|alizarin|permanent rose|opera|indanthrene|prussian|hooker|sap green|viridian hue|isoindolin|hansa|azo yellow|primary (cyan|magenta|yellow)/.test(
+        name
+      )
+    ) {
+      if (!opacity) opacity = "transparent";
+      if (!staining) {
+        staining = /phthalo|quin|opera|prussian|winsor blue|winsor green/.test(
+          name
+        )
+          ? "high"
+          : "med";
+      }
+      if (granulating === null) granulating = false;
+    }
+    if (
+      /cadmium|titanium|zinc white|permanent white|opaque white|ivory black|lamp black|mars black|carbon black|bone black|jet black|naples|scheveningen white|radiant white|foundation white/.test(
+        name
+      )
+    ) {
+      if (!opacity) opacity = /zinc|naples/.test(name) ? "semi" : "opaque";
+      if (!staining) staining = "low";
+      if (granulating === null) granulating = false;
+    }
+    if (
+      /ultramarine|umber|sienna|ochre|oxide|venetian|caput|sepia|moonglow|lunar|granulat|cobalt violet|cerulean|raw sienna|burnt sienna|yellow ochre|indian red|buff titanium|green apatite|undersea|shadow violet/.test(
+        name
+      )
+    ) {
+      if (!opacity) {
+        opacity = /cerulean|ochre|oxide|venetian|indian red|buff/.test(name)
+          ? "opaque"
+          : "semi";
+      }
+      if (!staining) staining = /ultramarine|cerulean/.test(name) ? "low" : "med";
+      if (granulating === null) {
+        granulating =
+          /ultramarine|umber|sienna|ochre|moonglow|lunar|granulat|apatite|undersea|shadow violet|cobalt violet|venetian|sepia/.test(
+            name
+          );
+      }
+    }
+    if (/cobalt blue|cobalt green|permanent green|emerald|olive|payne|neutral tint|indigo|viridian(?! hue)/.test(name)) {
+      if (!opacity) opacity = /viridian|cobalt blue|emerald/.test(name) ? "semi" : "semi";
+      if (!staining) staining = /indigo|payne|neutral/.test(name) ? "med" : "low";
+      if (granulating === null) {
+        granulating = /cobalt blue|viridian/.test(name);
+      }
+    }
+  }
+
+  // Ink lines: treat as transparent high-stain dyes unless pigment acrylic ink
+  if (paint.medium === "ink" || /ink|diamine|bombay|india ink|sumi/.test(name)) {
+    if (!opacity) opacity = /white|titanium|opaque/.test(name) ? "opaque" : "transparent";
+    if (!staining) staining = /white|titanium/.test(name) ? "low" : "high";
+    if (granulating === null) granulating = false;
+  }
+
+  return {
+    ...paint,
+    opacity: opacity || "semi",
+    staining: staining || "med",
+    granulating: granulating === null ? false : granulating,
+    traitsInferred: !paint.opacity && !paint.staining && paint.granulating == null,
+  };
+};
+
+/** Enrich all palette entries once at load */
+(function enrichAllPaintTraits() {
+  const enrich = (p) => window.inferPaintTraits(p);
+  if (window.PAINT_PALETTES) {
+    if (Array.isArray(window.PAINT_PALETTES.limited)) {
+      window.PAINT_PALETTES.limited = window.PAINT_PALETTES.limited.map(enrich);
+    }
+    if (Array.isArray(window.PAINT_PALETTES.named)) {
+      window.PAINT_PALETTES.named = window.PAINT_PALETTES.named.map(enrich);
+    }
+  }
+  if (Array.isArray(window.BRAND_PALETTES)) {
+    window.BRAND_PALETTES.forEach((brand) => {
+      if (Array.isArray(brand.paints)) {
+        brand.paints = brand.paints.map((p) =>
+          enrich({ ...p, medium: brand.medium })
+        );
+      }
+    });
+  }
+})();
+
 window.MODE_TIPS = {
   watercolour: [
     "Lighten with water, not white. The paper is your lightest value — let it glow through the wash.",

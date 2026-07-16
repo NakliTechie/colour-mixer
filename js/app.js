@@ -800,10 +800,19 @@
     state.slots.forEach((slot, index) => {
       const row = document.createElement("div");
       row.className = "mix-slot";
+      const traits =
+        typeof window.inferPaintTraits === "function"
+          ? window.inferPaintTraits(slot)
+          : slot;
+      const tagsHtml =
+        typeof paintTagRenderer === "function"
+          ? paintTagRenderer(traits)
+          : "";
       row.innerHTML = `
         <div class="slot-chip" style="background:${normalizeHex(slot.hex)}"></div>
         <div class="slot-meta">
           <div class="slot-name">${escapeHtml(slot.name)}</div>
+          ${tagsHtml}
           <div class="slot-parts">
             <input type="range" min="1" max="12" step="1" value="${slot.parts}" data-slot-index="${index}" aria-label="Parts for ${escapeHtml(slot.name)}" />
             <span class="parts-val">${slot.parts} part${slot.parts === 1 ? "" : "s"}</span>
