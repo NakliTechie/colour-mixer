@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="Plan watercolour and acrylic paint mixes with pigment-accurate colour blending, glazes, recipes, and photo matching." />
+  <meta name="theme-color" content="#2c3e50" />
+  <title>Colour Mixer — Watercolour &amp; Acrylic</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='12' cy='14' r='8' fill='%232B4C9B'/%3E%3Ccircle cx='20' cy='18' r='8' fill='%23F2B705' opacity='0.9'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
+</head>
+<body data-mode="watercolour">
+  <a class="skip-link" href="#main">Skip to mixer</a>
+
+  <header class="site-header">
+    <div class="brand">
+      <h1>Colour Mixer</h1>
+      <p class="tagline">Plan mixes · glaze · match</p>
+    </div>
+
+    <div class="mode-toggle" role="group" aria-label="Paint medium">
+      <button type="button" class="mode-btn is-active" data-mode="watercolour" aria-pressed="true">
+        Watercolour
+      </button>
+      <button type="button" class="mode-btn" data-mode="acrylic" aria-pressed="false">
+        Acrylic
+      </button>
+    </div>
+  </header>
+
+  <main id="main" class="layout">
+    <!-- Palette -->
+    <section class="panel palette-panel" aria-labelledby="palette-heading">
+      <div class="panel-head">
+        <h2 id="palette-heading">Palette</h2>
+        <div class="tabs" role="tablist" aria-label="Palette source">
+          <button type="button" class="tab is-active" role="tab" aria-selected="true" data-palette-tab="limited">Limited</button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-palette-tab="named">Named paints</button>
+          <button type="button" class="tab" role="tab" aria-selected="false" data-palette-tab="custom">Custom</button>
+        </div>
+      </div>
+
+      <div class="palette-body">
+        <div id="palette-limited" class="palette-grid" role="tabpanel"></div>
+        <div id="palette-named" class="palette-grid hidden" role="tabpanel" hidden></div>
+        <div id="palette-custom" class="custom-palette hidden" role="tabpanel" hidden>
+          <label class="field-label">
+            Pick a colour
+            <input type="color" id="custom-color" value="#c45c26" />
+          </label>
+          <label class="field-label">
+            Name (optional)
+            <input type="text" id="custom-name" placeholder="My mix base" maxlength="40" />
+          </label>
+          <div class="row-actions">
+            <button type="button" class="btn btn-secondary" id="add-custom-swatch">Add to custom palette</button>
+            <button type="button" class="btn btn-ghost" id="add-custom-to-mix">Add to mix</button>
+          </div>
+          <div id="custom-swatches" class="palette-grid"></div>
+        </div>
+      </div>
+
+      <p class="hint" id="palette-hint">Tap a paint to add it to the mix. Limited set is a classic split-primary starter palette.</p>
+    </section>
+
+    <!-- Mixer -->
+    <section class="panel mixer-panel" aria-labelledby="mixer-heading">
+      <div class="panel-head">
+        <h2 id="mixer-heading">Mix</h2>
+        <button type="button" class="btn btn-ghost btn-sm" id="clear-mix">Clear</button>
+      </div>
+
+      <div id="mix-slots" class="mix-slots" aria-live="polite"></div>
+      <p class="empty-state" id="mix-empty">Add 1–4 paints from the palette. Drag parts with the sliders.</p>
+
+      <div class="mode-controls">
+        <!-- Watercolour controls -->
+        <div class="control-block" data-show-mode="watercolour">
+          <label class="field-label" for="water-slider">
+            Water
+            <span class="value-readout" id="water-readout">40%</span>
+          </label>
+          <input type="range" id="water-slider" min="0" max="95" value="40" />
+          <p class="micro">More water → lighter wash. White of the paper shows through — avoid white paint when you can.</p>
+        </div>
+
+        <!-- Acrylic controls -->
+        <div class="control-block" data-show-mode="acrylic" hidden>
+          <label class="field-label" for="white-slider">
+            Titanium white
+            <span class="value-readout" id="white-readout">0%</span>
+          </label>
+          <input type="range" id="white-slider" min="0" max="90" value="0" />
+
+          <label class="field-label" for="black-slider">
+            Carbon black
+            <span class="value-readout" id="black-readout">0%</span>
+          </label>
+          <input type="range" id="black-slider" min="0" max="60" value="0" />
+
+          <label class="field-label" for="opacity-slider">
+            Body / covering power
+            <span class="value-readout" id="opacity-readout">90%</span>
+          </label>
+          <input type="range" id="opacity-slider" min="15" max="100" value="90" />
+          <p class="micro">White tints, black shades. High body covers the ground; lower body acts more like a glaze.</p>
+        </div>
+      </div>
+
+      <div class="result-block">
+        <div class="swatch-stage" id="swatch-stage">
+          <div class="swatch-ground" id="swatch-ground"></div>
+          <div class="swatch-result" id="swatch-result" title="Mixed result"></div>
+        </div>
+
+        <div class="result-meta">
+          <div class="hex-row">
+            <code id="result-hex">#FFFFFF</code>
+            <button type="button" class="btn btn-secondary btn-sm" id="copy-hex">Copy hex</button>
+          </div>
+          <p class="rgb-line" id="result-rgb">rgb(255, 255, 255)</p>
+          <p class="recipe" id="result-recipe">Add paints to build a recipe.</p>
+          <div class="row-actions">
+            <button type="button" class="btn btn-primary" id="save-mix" disabled>Save to history</button>
+            <button type="button" class="btn btn-secondary" id="add-glaze-from-mix" disabled>Add as glaze layer</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="compare-strip" aria-label="Pigment mix vs digital average">
+        <div class="compare-item">
+          <div class="compare-swatch" id="compare-pigment"></div>
+          <span>Pigment (KM)</span>
+        </div>
+        <div class="compare-item">
+          <div class="compare-swatch" id="compare-rgb"></div>
+          <span>RGB average</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Glaze -->
+    <section class="panel glaze-panel" aria-labelledby="glaze-heading">
+      <div class="panel-head">
+        <h2 id="glaze-heading">Glaze stack</h2>
+        <button type="button" class="btn btn-ghost btn-sm" id="clear-glaze">Clear stack</button>
+      </div>
+      <p class="hint">Build optical layers over a ground. Bottom layer first — like painting on paper or canvas.</p>
+
+      <label class="field-label" for="ground-select">Ground</label>
+      <select id="ground-select">
+        <option value="paper-white">Paper white</option>
+        <option value="paper-cream">Cream paper</option>
+        <option value="paper-cold">Cold-press grey</option>
+        <option value="canvas">Canvas tone</option>
+        <option value="mid-grey">Mid grey underpainting</option>
+      </select>
+
+      <ol id="glaze-layers" class="glaze-layers"></ol>
+      <p class="empty-state" id="glaze-empty">No layers yet. Mix a colour, then “Add as glaze layer”.</p>
+
+      <div class="glaze-preview-wrap">
+        <div class="glaze-preview" id="glaze-preview" aria-label="Glaze composite preview"></div>
+        <div class="glaze-preview-meta">
+          <code id="glaze-hex">—</code>
+          <button type="button" class="btn btn-secondary btn-sm" id="copy-glaze-hex" disabled>Copy</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="use-glaze-as-mix" disabled>Use as mix base</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Secondary tools -->
+    <section class="panel tools-panel" aria-labelledby="tools-heading">
+      <div class="panel-head">
+        <h2 id="tools-heading">Tools</h2>
+      </div>
+
+      <div class="tools-grid">
+        <div class="tool-card">
+          <h3>Match from photo</h3>
+          <p class="micro">Sample a colour from an image, then reverse-plan a mix from your palette.</p>
+          <label class="file-btn btn btn-secondary">
+            Choose image
+            <input type="file" id="photo-input" accept="image/*" hidden />
+          </label>
+          <div class="photo-workspace hidden" id="photo-workspace">
+            <canvas id="photo-canvas" width="320" height="240" aria-label="Click to sample colour"></canvas>
+            <p class="micro">Click the image to sample.</p>
+            <div class="sample-row">
+              <div class="sample-swatch" id="sample-swatch"></div>
+              <div>
+                <code id="sample-hex">—</code>
+                <button type="button" class="btn btn-secondary btn-sm" id="sample-to-mix" disabled>Add sample to mix</button>
+              </div>
+            </div>
+            <div id="match-suggestions" class="match-suggestions"></div>
+          </div>
+        </div>
+
+        <div class="tool-card">
+          <h3>Learn</h3>
+          <div class="tip-card" id="tip-card">
+            <p id="tip-text"></p>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" id="next-tip">Another tip</button>
+        </div>
+
+        <div class="tool-card history-card">
+          <h3>History</h3>
+          <p class="micro">Saved on this device only.</p>
+          <ul id="history-list" class="history-list"></ul>
+          <button type="button" class="btn btn-ghost btn-sm" id="clear-history">Clear history</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      Pigment mixing via
+      <a href="https://github.com/rvanwijnen/spectral.js" target="_blank" rel="noopener">spectral.js</a>
+      (Kubelka–Munk). Approximate guidance for planning — real tubes vary by brand and batch.
+    </p>
+    <p class="footer-host">mixer.naklitechie.com</p>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="vendor/spectral.min.js"></script>
+  <script src="js/palettes.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
