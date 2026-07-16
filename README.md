@@ -25,21 +25,18 @@ python3 -m http.server 8765
 
 Or open `index.html` directly (clipboard and some features work best over http).
 
-## Deploy
+## Deploy (Cloudflare Pages)
 
-Upload the whole folder (or its contents) to the web root for `mixer.naklitechie.com`:
+**Git-connected Pages project:** `colour-mixer`  
+- Repo: `NakliTechie/colour-mixer` · branch `main`  
+- Build command: *(none)* · output directory: `/`  
+- Auto-deploys on every push to `main` (and preview deploys for other branches/PRs)
 
-```
-index.html
-css/styles.css
-js/app.js
-js/palettes.js
-vendor/spectral.min.js
-vendor/spectral.js   # optional, unminified
-README.md
-```
+**URLs**
+- https://colour-mixer.pages.dev  
+- https://mixer.naklitechie.com (custom domain)
 
-No build step. No backend.
+No build step. No backend. Static files from repo root.
 
 ## Mediums
 
