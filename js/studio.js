@@ -563,7 +563,10 @@
     }
     // Surface QR under Studio tools
     const tools = document.getElementById("tools-panel");
-    if (tools) tools.open = true;
+    if (tools) {
+      tools.open = true;
+      tools.setAttribute("open", "");
+    }
     const wrap = $("#share-qr-wrap");
     const img = $("#share-qr-img");
     const txt = $("#share-url-text");
