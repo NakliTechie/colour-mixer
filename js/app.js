@@ -155,6 +155,14 @@
     valueStrip: $("#value-strip"),
     valueStripHint: $("#value-strip-hint"),
     tempChip: $("#temp-chip"),
+    stickyResult: $("#sticky-result"),
+    stickySwatch: $("#sticky-swatch"),
+    stickyHex: $("#sticky-hex"),
+    stickyRecipe: $("#sticky-recipe"),
+    stickyCopy: $("#sticky-copy"),
+    trySampleMix: $("#try-sample-mix"),
+    glazePanel: $("#glaze-panel"),
+    referencePanel: $("#reference-panel"),
   };
 
   // ——— Utils ———
@@ -821,8 +829,62 @@
     el.blackReadout.textContent = `${state.black}%`;
     el.opacityReadout.textContent = `${state.opacity}%`;
 
+    // Sticky mobile bar
+    if (el.stickyResult) {
+      if (hasMix) {
+        el.stickyResult.hidden = false;
+        if (el.stickySwatch) el.stickySwatch.style.backgroundColor = result.display;
+        if (el.stickyHex) el.stickyHex.textContent = result.display;
+        if (el.stickyRecipe) {
+          el.stickyRecipe.textContent = result.recipe;
+        }
+      } else {
+        el.stickyResult.hidden = true;
+      }
+    }
+
     renderHueWheel(result);
     renderValueStrip();
+  }
+
+  function trySampleMix() {
+    state.mode = "watercolour";
+    state.slots = [];
+    state.water = 40;
+    state.white = 0;
+    state.black = 0;
+    state.opacity = 90;
+    if (el.waterSlider) el.waterSlider.value = "40";
+    if (el.whiteSlider) el.whiteSlider.value = "0";
+    if (el.blackSlider) el.blackSlider.value = "0";
+    if (el.opacitySlider) el.opacitySlider.value = "90";
+
+    const limited = window.PAINT_PALETTES.limited || [];
+    const ultra = limited.find((p) => /ultramarine/i.test(p.name));
+    const sienna = limited.find((p) => /burnt sienna/i.test(p.name));
+    if (ultra) {
+      state.slots.push({
+        id: uid("slot"),
+        name: ultra.name,
+        hex: normalizeHex(ultra.hex),
+        parts: 1,
+      });
+    }
+    if (sienna) {
+      state.slots.push({
+        id: uid("slot"),
+        name: sienna.name,
+        hex: normalizeHex(sienna.hex),
+        parts: 1,
+      });
+    }
+    if (el.referencePanel) el.referencePanel.open = true;
+    renderMode();
+    toast("Sample mix: Ultramarine + Burnt Sienna");
+    const block = document.getElementById("result-block");
+    if (block) {
+      block.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   }
 
   function ensureWheelBase() {
@@ -1262,6 +1324,9 @@
     });
     renderGlaze();
     toast("Glaze layer added");
+    if (el.glazePanel) {
+      el.glazePanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   }
 
   function clearGlaze() {
@@ -1547,6 +1612,16 @@
     el.saveMix.addEventListener("click", saveCurrentMix);
     el.addGlazeFromMix.addEventListener("click", addGlazeFromMix);
     el.clearGlaze.addEventListener("click", clearGlaze);
+    if (el.trySampleMix) {
+      el.trySampleMix.addEventListener("click", trySampleMix);
+    }
+    if (el.stickyCopy) {
+      el.stickyCopy.addEventListener("click", () => {
+        if (el.stickyHex && el.stickyHex.textContent !== "—") {
+          copyText(el.stickyHex.textContent);
+        }
+      });
+    }
 
     el.copyHex.addEventListener("click", () =>
       copyText(el.resultHex.textContent)
