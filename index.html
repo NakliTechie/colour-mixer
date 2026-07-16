@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="description" content="Plan watercolour and acrylic paint mixes with pigment-accurate colour blending, glazes, recipes, and photo matching." />
+  <meta name="description" content="Plan watercolour, gouache, acrylic, oil, and ink mixes with pigment-accurate colour blending, glazes, recipes, and photo matching." />
   <meta name="theme-color" content="#2c3e50" />
-  <title>Colour Mixer — Watercolour &amp; Acrylic</title>
+  <title>Colour Mixer — Paint &amp; Ink</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='12' cy='14' r='8' fill='%232B4C9B'/%3E%3Ccircle cx='20' cy='18' r='8' fill='%23F2B705' opacity='0.9'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -22,12 +22,11 @@
     </div>
 
     <div class="mode-toggle" role="group" aria-label="Paint medium">
-      <button type="button" class="mode-btn is-active" data-mode="watercolour" aria-pressed="true">
-        Watercolour
-      </button>
-      <button type="button" class="mode-btn" data-mode="acrylic" aria-pressed="false">
-        Acrylic
-      </button>
+      <button type="button" class="mode-btn is-active" data-mode="watercolour" aria-pressed="true">Watercolour</button>
+      <button type="button" class="mode-btn" data-mode="gouache" aria-pressed="false">Gouache</button>
+      <button type="button" class="mode-btn" data-mode="acrylic" aria-pressed="false">Acrylic</button>
+      <button type="button" class="mode-btn" data-mode="oil" aria-pressed="false">Oil</button>
+      <button type="button" class="mode-btn" data-mode="ink" aria-pressed="false">Ink</button>
     </div>
   </header>
 
@@ -86,36 +85,42 @@
       <p class="empty-state" id="mix-empty">Add 1–4 paints from the palette. Drag parts with the sliders.</p>
 
       <div class="mode-controls">
-        <!-- Watercolour controls -->
-        <div class="control-block" data-show-mode="watercolour">
+        <!-- Dilution: watercolour, gouache, ink -->
+        <div class="control-block" data-show-modes="watercolour gouache ink" id="ctrl-water">
           <label class="field-label" for="water-slider">
-            Water
+            <span id="water-label">Water</span>
             <span class="value-readout" id="water-readout">40%</span>
           </label>
           <input type="range" id="water-slider" min="0" max="95" value="40" />
-          <p class="micro">More water → lighter wash. White of the paper shows through — avoid white paint when you can.</p>
+          <p class="micro" id="water-hint">More water → lighter wash. White of the paper shows through.</p>
         </div>
 
-        <!-- Acrylic controls -->
-        <div class="control-block" data-show-mode="acrylic" hidden>
+        <!-- White: gouache, acrylic, oil -->
+        <div class="control-block" data-show-modes="gouache acrylic oil" id="ctrl-white" hidden>
           <label class="field-label" for="white-slider">
-            Titanium white
+            <span id="white-label">Titanium white</span>
             <span class="value-readout" id="white-readout">0%</span>
           </label>
           <input type="range" id="white-slider" min="0" max="90" value="0" />
+        </div>
 
+        <!-- Black: acrylic, oil (optional gouache via slider hidden for gouache by default) -->
+        <div class="control-block" data-show-modes="acrylic oil" id="ctrl-black" hidden>
           <label class="field-label" for="black-slider">
-            Carbon black
+            <span id="black-label">Carbon black</span>
             <span class="value-readout" id="black-readout">0%</span>
           </label>
           <input type="range" id="black-slider" min="0" max="60" value="0" />
+        </div>
 
+        <!-- Body: gouache, acrylic, oil -->
+        <div class="control-block" data-show-modes="gouache acrylic oil" id="ctrl-opacity" hidden>
           <label class="field-label" for="opacity-slider">
-            Body / covering power
+            <span id="opacity-label">Body / covering power</span>
             <span class="value-readout" id="opacity-readout">90%</span>
           </label>
           <input type="range" id="opacity-slider" min="15" max="100" value="90" />
-          <p class="micro">White tints, black shades. High body covers the ground; lower body acts more like a glaze.</p>
+          <p class="micro" id="body-hint">White tints, black shades. High body covers the ground; lower body acts more like a glaze.</p>
         </div>
       </div>
 
@@ -164,8 +169,12 @@
         <option value="paper-white">Paper white</option>
         <option value="paper-cream">Cream paper</option>
         <option value="paper-cold">Cold-press grey</option>
+        <option value="bristol">Bristol / illustration board</option>
         <option value="canvas">Canvas tone</option>
+        <option value="gesso">White gesso</option>
+        <option value="linen">Linen / oil ground</option>
         <option value="mid-grey">Mid grey underpainting</option>
+        <option value="toned-panel">Toned panel (warm)</option>
       </select>
 
       <ol id="glaze-layers" class="glaze-layers"></ol>
@@ -229,9 +238,10 @@
 
   <footer class="site-footer">
     <p>
+      Mediums: watercolour · gouache · acrylic · oil · ink.
       Pigment mixing via
       <a href="https://github.com/rvanwijnen/spectral.js" target="_blank" rel="noopener">spectral.js</a>
-      (Kubelka–Munk). Approximate guidance for planning — real tubes vary by brand and batch.
+      (Kubelka–Munk). Approximate guidance for planning — real tubes and inks vary by brand and batch.
     </p>
     <p class="footer-host">mixer.naklitechie.com</p>
   </footer>

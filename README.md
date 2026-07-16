@@ -1,11 +1,12 @@
 # Colour Mixer
 
-Single-page planning tool for **watercolour** and **acrylic** mixes.
+Single-page planning tool for **watercolour**, **gouache**, **acrylic**, **oil**, and **ink**.
 
 - Pigment-aware blending via [spectral.js](https://github.com/rvanwijnen/spectral.js) (Kubelka–Munk)
-- Limited palette · **brand lines** (Winsor & Newton, Daniel Smith, Schmincke, Sennelier, Golden, Liquitex) · common names · free custom pickers
-- Mix recipes with parts + water (WC) or white/black/body (acrylic)
-- Glaze stack over paper/canvas grounds
+- Five mediums with medium-specific controls, grounds, and tips
+- Limited palette · **40 brand lines** · common names · free custom pickers
+- Mix recipes with parts + water/dilution, white/black, body
+- Glaze stack over paper/canvas/linen grounds
 - Photo sample + suggested matches
 - Mode-aware tips and local history
 
@@ -40,40 +41,21 @@ README.md
 
 No build step. No backend.
 
+## Mediums
+
+| Medium | Controls | Default ground |
+|--------|----------|----------------|
+| Watercolour | Water | Paper white |
+| Gouache | Water + white + body | Bristol |
+| Acrylic | White + black + body | Canvas |
+| Oil | White + black + body | Linen |
+| Ink | Dilution (water) | Paper white |
+
+Gouache brand list also includes watercolour lines as planning proxies.
+
 ## Brand palettes
 
-Under **Brands** (filtered by medium):
-
-### Watercolour
-| Brand | Line |
-|-------|------|
-| Winsor & Newton | Professional Watercolour |
-| Winsor & Newton | Cotman Watercolour |
-| Daniel Smith | Extra Fine Watercolour |
-| Schmincke | Horadam Aquarell |
-| Sennelier | l'Aquarelle |
-| Holbein | Artists' Watercolour |
-| M. Graham | Artists' Watercolour |
-| Rembrandt | Extra Fine Watercolour |
-| White Nights | Extra Fine Watercolour |
-| QoR (Golden) | Modern Watercolor |
-| Mijello | Mission Gold |
-| Roman Szmal | Aquarius |
-| Daler-Rowney | Artists' Watercolour |
-
-### Acrylic
-| Brand | Line |
-|-------|------|
-| Golden | Heavy Body Acrylic |
-| Liquitex | Heavy Body Acrylic |
-| Winsor & Newton | Professional Acrylic |
-| Winsor & Newton | Galeria Acrylic |
-| Amsterdam | Standard Series |
-| Matisse | Structure Acrylic |
-| Atelier | Interactive Acrylic |
-| Pébéo | Studio Acrylics |
-| Holbein | Heavy Body Acrylic |
-| Blick | Artists' Acrylic |
+**40 lines** under **Brands** (filtered by medium): watercolour (13), gouache (5 + WC proxies), acrylic (10), oil (6), ink (6).
 
 ## Notes
 

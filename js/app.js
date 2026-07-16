@@ -1,5 +1,5 @@
 /**
- * Colour Mixer — watercolour & acrylic planning tool
+ * Colour Mixer — watercolour, gouache, acrylic, oil, ink
  * Pigment mixing via spectral.js (Kubelka–Munk)
  */
 (function () {
@@ -9,24 +9,75 @@
   const HISTORY_KEY = "colour-mixer-history-v1";
   const CUSTOM_KEY = "colour-mixer-custom-v1";
   const MAX_HISTORY = 24;
-
   const BRAND_KEY = "colour-mixer-brand-v1";
+  const MODE_KEY = "colour-mixer-mode-v1";
 
-  /** @type {{ mode: 'watercolour'|'acrylic', slots: MixSlot[], water: number, white: number, black: number, opacity: number, glaze: GlazeLayer[], ground: string, tipIndex: number, custom: Paint[], sampleHex: string|null, brandId: string }} */
+  const MODES = ["watercolour", "gouache", "acrylic", "oil", "ink"];
+  const MODE_SHORT = {
+    watercolour: "WC",
+    gouache: "Gou",
+    acrylic: "Ac",
+    oil: "Oil",
+    ink: "Ink",
+  };
+  const DEFAULT_GROUND = {
+    watercolour: "paper-white",
+    gouache: "bristol",
+    acrylic: "canvas",
+    oil: "linen",
+    ink: "paper-white",
+  };
+
+  function loadMode() {
+    const m = localStorage.getItem(MODE_KEY);
+    return MODES.includes(m) ? m : "watercolour";
+  }
+
+  /** @type {{ mode: string, slots: MixSlot[], water: number, white: number, black: number, opacity: number, glaze: GlazeLayer[], ground: string, tipIndex: number, custom: Paint[], sampleHex: string|null, brandId: string }} */
   const state = {
-    mode: "watercolour",
+    mode: loadMode(),
     slots: [],
     water: 40,
     white: 0,
     black: 0,
     opacity: 90,
     glaze: [],
-    ground: "paper-white",
+    ground: DEFAULT_GROUND[loadMode()] || "paper-white",
     tipIndex: 0,
     custom: loadJSON(CUSTOM_KEY, []),
     sampleHex: null,
     brandId: localStorage.getItem(BRAND_KEY) || "wn-pwc",
   };
+
+  function usesWhiteBlack() {
+    return state.mode === "acrylic" || state.mode === "oil" || state.mode === "gouache";
+  }
+
+  function usesDilution() {
+    return (
+      state.mode === "watercolour" ||
+      state.mode === "gouache" ||
+      state.mode === "ink"
+    );
+  }
+
+  function usesBody() {
+    return (
+      state.mode === "acrylic" ||
+      state.mode === "oil" ||
+      state.mode === "gouache"
+    );
+  }
+
+  function isWashMedium() {
+    return state.mode === "watercolour" || state.mode === "ink";
+  }
+
+  function filterAcrylicOnly(p) {
+    // White paints make sense on opaque mediums; hide pure acrylic whites on WC/ink
+    if (p.acrylicOnly && isWashMedium()) return false;
+    return true;
+  }
 
   /**
    * @typedef {{ id: string, name: string, hex: string, parts: number, note?: string }} MixSlot
@@ -268,22 +319,27 @@
     const entries = baseMixEntries();
     if (!entries.length) return null;
 
-    if (state.mode === "acrylic") {
+    if (usesWhiteBlack()) {
       const extra = [...entries];
-      // white/black as % of total pigment weight
       const pigmentTotal = entries.reduce((a, e) => a + e.factor, 0);
       if (state.white > 0) {
+        const whiteName =
+          state.mode === "oil"
+            ? "Titanium White"
+            : state.mode === "gouache"
+              ? "Zinc / Titanium White"
+              : "Titanium White";
         extra.push({
           hex: "#F7F5F0",
           factor: (state.white / 100) * pigmentTotal * 1.4,
-          name: "Titanium White",
+          name: whiteName,
         });
       }
-      if (state.black > 0) {
+      if (state.black > 0 && (state.mode === "acrylic" || state.mode === "oil")) {
         extra.push({
           hex: "#1A1A1A",
           factor: (state.black / 100) * pigmentTotal * 1.1,
-          name: "Carbon Black",
+          name: state.mode === "oil" ? "Ivory Black" : "Carbon Black",
         });
       }
       return {
@@ -293,7 +349,7 @@
       };
     }
 
-    // Watercolour: pure pigment mix (dilution applied at display)
+    // Watercolour / ink: pure pigment (dilution at display)
     return {
       pigment: mixPigments(entries),
       rgbAvg: mixRgbAverage(entries),
@@ -318,10 +374,9 @@
     let display;
     let alpha;
 
-    if (state.mode === "watercolour") {
-      // water 0 = full strength, 95 = very pale wash
+    if (state.mode === "watercolour" || state.mode === "ink") {
+      // water/dilution 0 = full strength, 95 = pale wash
       alpha = 1 - state.water / 100;
-      // slight spectral lift toward paper for very watery washes
       const wash =
         state.water > 5
           ? mixPigments([
@@ -329,8 +384,27 @@
               { hex: ground, factor: state.water / 100 },
             ])
           : mass.pigment;
-      display = compositeOver(ground, wash, clamp(alpha * 1.05, 0.05, 1));
+      // Ink sits a touch flatter/more dye-like on paper
+      const cover =
+        state.mode === "ink"
+          ? clamp(alpha * 1.12, 0.06, 1)
+          : clamp(alpha * 1.05, 0.05, 1);
+      display = compositeOver(ground, wash, cover);
+    } else if (state.mode === "gouache") {
+      // Opaque body + optional water (matte wash when wet)
+      const body = state.opacity / 100;
+      const wet = 1 - state.water / 100;
+      alpha = clamp(body * (0.45 + 0.55 * wet), 0.12, 1);
+      const film =
+        state.water > 10
+          ? mixPigments([
+              { hex: mass.pigment, factor: Math.max(0.1, wet) },
+              { hex: ground, factor: state.water / 200 },
+            ])
+          : mass.pigment;
+      display = compositeOver(ground, film, alpha);
     } else {
+      // Acrylic / oil
       alpha = state.opacity / 100;
       display = compositeOver(ground, mass.pigment, alpha);
     }
@@ -348,11 +422,9 @@
   function buildRecipe(entries) {
     if (!entries || !entries.length) return "Add paints to build a recipe.";
 
-    // Normalize parts for display
     const named = entries.filter((e) => e.name);
     const fromSlots = named.length ? named : entries;
 
-    // Use original slot parts when possible
     if (state.slots.length) {
       const total = state.slots.reduce((a, s) => a + s.parts, 0) || 1;
       const parts = state.slots
@@ -362,16 +434,28 @@
         })
         .join(" + ");
 
-      let suffix = "";
-      if (state.mode === "watercolour") {
-        suffix = ` · water ~${state.water}% (wash strength ${100 - state.water}%)`;
-      } else {
-        const bits = [];
-        if (state.white > 0) bits.push(`+${state.white}% white`);
-        if (state.black > 0) bits.push(`+${state.black}% black`);
-        bits.push(`body ${state.opacity}%`);
-        suffix = " · " + bits.join(", ");
+      const bits = [];
+      if (usesDilution()) {
+        if (state.mode === "ink") {
+          bits.push(
+            `dilution ~${state.water}% (strength ${100 - state.water}%)`
+          );
+        } else {
+          bits.push(
+            `water ~${state.water}% (wash strength ${100 - state.water}%)`
+          );
+        }
       }
+      if (state.white > 0 && usesWhiteBlack()) {
+        bits.push(`+${state.white}% white`);
+      }
+      if (state.black > 0 && (state.mode === "acrylic" || state.mode === "oil")) {
+        bits.push(`+${state.black}% black`);
+      }
+      if (usesBody()) {
+        bits.push(`body ${state.opacity}%`);
+      }
+      const suffix = bits.length ? " · " + bits.join(", ") : "";
       return parts + suffix;
     }
 
@@ -387,25 +471,99 @@
   }
 
   // ——— Render ———
+  function updateControlCopy() {
+    const waterLabel = $("#water-label");
+    const waterHint = $("#water-hint");
+    const whiteLabel = $("#white-label");
+    const blackLabel = $("#black-label");
+    const opacityLabel = $("#opacity-label");
+    const bodyHint = $("#body-hint");
+
+    if (waterLabel) {
+      waterLabel.textContent =
+        state.mode === "ink" ? "Dilution (water)" : "Water";
+    }
+    if (waterHint) {
+      const hints = {
+        watercolour:
+          "More water → lighter wash. Paper is your lightest value — avoid white paint when you can.",
+        gouache:
+          "Water thins for washes; dry gouache is opaque. Designers often lighten with white, not only water.",
+        ink: "More water → lighter wash. Layer dry glazes for depth; dye inks stain, pigment inks sit more on the surface.",
+      };
+      waterHint.textContent = hints[state.mode] || hints.watercolour;
+    }
+    if (whiteLabel) {
+      whiteLabel.textContent =
+        state.mode === "gouache"
+          ? "White (zinc / titanium)"
+          : state.mode === "oil"
+            ? "Titanium / lead white (proxy)"
+            : "Titanium white";
+    }
+    if (blackLabel) {
+      blackLabel.textContent =
+        state.mode === "oil" ? "Ivory / lamp black" : "Carbon black";
+    }
+    if (opacityLabel) {
+      opacityLabel.textContent =
+        state.mode === "oil"
+          ? "Body / paint load"
+          : state.mode === "gouache"
+            ? "Opacity / body"
+            : "Body / covering power";
+    }
+    if (bodyHint) {
+      const hints = {
+        gouache:
+          "High opacity covers like designer’s gouache. Lower body + water for more watercolour-like layers.",
+        acrylic:
+          "White tints, black shades. High body covers the ground; lower body acts more like a glaze.",
+        oil: "Mass-tone first, then tint/shade. Lower body ≈ more medium — fat-over-lean still applies on the canvas.",
+      };
+      bodyHint.textContent = hints[state.mode] || hints.acrylic;
+    }
+
+    // Mode-sensible default opacity when switching
+    if (state.mode === "gouache" && Number(el.opacitySlider.value) < 70) {
+      // leave user values if already set; only nudge on first switch via defaults in mode click
+    }
+  }
+
   function renderMode() {
     el.body.dataset.mode = state.mode;
+    try {
+      localStorage.setItem(MODE_KEY, state.mode);
+    } catch {
+      /* ignore */
+    }
+
     $$(".mode-btn").forEach((btn) => {
       const active = btn.dataset.mode === state.mode;
       btn.classList.toggle("is-active", active);
       btn.setAttribute("aria-pressed", active ? "true" : "false");
     });
-    $$("[data-show-mode]").forEach((node) => {
-      const show = node.dataset.showMode === state.mode;
+
+    // Support data-show-mode (single) and data-show-modes (space-separated)
+    $$("[data-show-mode], [data-show-modes]").forEach((node) => {
+      const multi = (node.dataset.showModes || "")
+        .split(/\s+/)
+        .filter(Boolean);
+      const single = node.dataset.showMode;
+      const modes = multi.length ? multi : single ? [single] : [];
+      const show = modes.includes(state.mode);
       node.hidden = !show;
     });
-    // Sensible ground default when switching medium
-    if (state.mode === "acrylic" && state.ground.startsWith("paper")) {
-      state.ground = "canvas";
-      el.groundSelect.value = "canvas";
-    } else if (state.mode === "watercolour" && state.ground === "canvas") {
-      state.ground = "paper-white";
-      el.groundSelect.value = "paper-white";
+
+    updateControlCopy();
+
+    // Preferred ground for each medium (user can still change after)
+    const preferred = DEFAULT_GROUND[state.mode];
+    if (preferred && el.groundSelect && el.groundSelect.querySelector(`option[value="${preferred}"]`)) {
+      state.ground = preferred;
+      el.groundSelect.value = preferred;
     }
+
     // Ensure selected brand is valid for this medium
     const brands = brandsForMode();
     if (brands.length && !brands.some((b) => b.id === state.brandId)) {
@@ -425,12 +583,19 @@
     const list = window.BRAND_PALETTES || [];
     return list
       .filter((b) => {
-        if (b.medium === "both") return true;
-        if (state.mode === "watercolour") return b.medium === "watercolour";
-        return b.medium === "acrylic";
+        if (b.medium === "both" || b.medium === "all") return true;
+        // Gouache can also use watercolour lines as planning proxies
+        if (state.mode === "gouache") {
+          return b.medium === "gouache" || b.medium === "watercolour";
+        }
+        return b.medium === state.mode;
       })
       .slice()
       .sort((a, b) => {
+        // Prefer exact medium first
+        const score = (x) => (x.medium === state.mode ? 0 : 1);
+        const d = score(a) - score(b);
+        if (d !== 0) return d;
         const ka = `${a.brand} ${a.line}`.toLowerCase();
         const kb = `${b.brand} ${b.line}`.toLowerCase();
         return ka.localeCompare(kb);
@@ -474,12 +639,11 @@
       return;
     }
     const paints = brand.paints
-      .filter((p) => !(state.mode === "watercolour" && p.acrylicOnly))
+      .filter(filterAcrylicOnly)
       .map((p) => ({
         ...p,
         id: p.id || `${brand.id}-${p.name}`,
         name: p.name,
-        // Prefix brand short name in mix recipe for clarity
         displayBrand: brand.brand,
         brandLine: brand.line,
       }));
@@ -491,10 +655,7 @@
 
   function renderPalettes() {
     paintGrid(el.paletteLimited, window.PAINT_PALETTES.limited);
-    const named = window.PAINT_PALETTES.named.filter((p) => {
-      if (state.mode === "watercolour" && p.acrylicOnly) return false;
-      return true;
-    });
+    const named = window.PAINT_PALETTES.named.filter(filterAcrylicOnly);
     paintGrid(el.paletteNamed, named);
     paintGrid(el.customSwatches, state.custom, true);
     renderBrandSelect();
@@ -655,7 +816,7 @@
       btn.innerHTML = `
         <span class="h-chip" style="background:${normalizeHex(item.displayHex)}"></span>
         <span class="h-text">${escapeHtml(item.recipe)}</span>
-        <span class="micro">${item.mode === "acrylic" ? "Ac" : "WC"}</span>
+        <span class="micro">${MODE_SHORT[item.mode] || item.mode || "?"}</span>
       `;
       btn.title = "Load this mix";
       btn.addEventListener("click", () => loadHistoryItem(item));
@@ -730,7 +891,7 @@
   }
 
   function loadHistoryItem(item) {
-    state.mode = item.mode === "acrylic" ? "acrylic" : "watercolour";
+    state.mode = MODES.includes(item.mode) ? item.mode : "watercolour";
     state.slots = (item.slots || []).map((s) => ({ ...s }));
     state.water = item.water ?? 40;
     state.white = item.white ?? 0;
@@ -751,10 +912,11 @@
       state.slots.length === 1
         ? state.slots[0].name
         : `Mix (${state.slots.map((s) => s.name.split(" ")[0]).join("+")})`;
-    const strength =
-      state.mode === "watercolour"
-        ? Math.round(100 - state.water)
-        : state.opacity;
+    const strength = usesDilution() && !usesBody()
+      ? Math.round(100 - state.water)
+      : usesBody()
+        ? state.opacity
+        : Math.round(100 - state.water);
     state.glaze.push({
       id: uid("glaze"),
       name,
@@ -833,16 +995,12 @@
   function allPalettePaints() {
     const brand = currentBrand();
     const brandPaints = brand
-      ? brand.paints
-          .filter((p) => !(state.mode === "watercolour" && p.acrylicOnly))
-          .map((p) => ({ ...p, name: p.name }))
+      ? brand.paints.filter(filterAcrylicOnly).map((p) => ({ ...p, name: p.name }))
       : [];
     return [
       ...window.PAINT_PALETTES.limited,
       ...brandPaints,
-      ...window.PAINT_PALETTES.named.filter(
-        (p) => !(state.mode === "watercolour" && p.acrylicOnly)
-      ),
+      ...window.PAINT_PALETTES.named.filter(filterAcrylicOnly),
       ...state.custom,
     ];
   }
@@ -919,7 +1077,22 @@
   function bindEvents() {
     $$(".mode-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
-        state.mode = btn.dataset.mode;
+        const next = btn.dataset.mode;
+        if (!MODES.includes(next) || next === state.mode) return;
+        state.mode = next;
+        // Sensible control defaults per medium (don't wipe an active mix palette)
+        if (next === "gouache") {
+          state.opacity = Math.max(state.opacity, 85);
+          state.water = Math.min(state.water, 25);
+          el.opacitySlider.value = String(state.opacity);
+          el.waterSlider.value = String(state.water);
+        } else if (next === "oil" || next === "acrylic") {
+          state.opacity = Math.max(state.opacity, 85);
+          el.opacitySlider.value = String(state.opacity);
+        } else if (next === "ink") {
+          state.water = state.water < 15 ? 30 : state.water;
+          el.waterSlider.value = String(state.water);
+        }
         renderMode();
       });
     });
@@ -1155,9 +1328,9 @@
     if (!spectralAvailable()) {
       console.warn("spectral.js not loaded — using RGB fallback");
     }
-    // Sync ground select default for watercolour
-    el.groundSelect.value = "paper-white";
-    state.ground = "paper-white";
+    const g = DEFAULT_GROUND[state.mode] || "paper-white";
+    state.ground = g;
+    if (el.groundSelect) el.groundSelect.value = g;
     bindEvents();
     renderMode();
     renderPalettes();
