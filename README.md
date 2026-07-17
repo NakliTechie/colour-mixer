@@ -5,6 +5,7 @@ Single-page planning tool for **watercolour**, **gouache**, **acrylic**, **oil**
 - Pigment-aware blending via [spectral.js](https://github.com/rvanwijnen/spectral.js) (Kubelka–Munk)
 - Five mediums with medium-specific controls, grounds, and tips
 - Limited palette · **40 brand lines** · common names · saved sets · free pickers
+- Paint library: search **~1,000 paints** by name/pigment · single-pigment & property filters · **cross-brand dupe finder** (ΔE)
 - Mix recipes with parts + water/dilution, white/black, body
 - Hue wheel (harmony rings) · value strip · mud score · light preview
 - Mixing chart · recipe card export · printable palette chart
