@@ -4,8 +4,8 @@ Single-page planning tool for **watercolour**, **gouache**, **acrylic**, **oil**
 
 - Pigment-aware blending via [spectral.js](https://github.com/rvanwijnen/spectral.js) (Kubelka–Munk)
 - Five mediums with medium-specific controls, grounds, and tips
-- Limited palette · **40 brand lines** · common names · saved sets · free pickers
-- Paint library: search **~1,000 paints** by name/pigment · single-pigment & property filters · **cross-brand dupe finder** (ΔE)
+- Limited palette · **62 brand lines** · common names · saved sets · free pickers
+- Paint library: search **~3,700 paints** by name/pigment · single-pigment & property filters · **cross-brand dupe finder** (ΔE)
 - Mix recipes with parts + water/dilution, white/black, body
 - Hue wheel (harmony rings) · value strip · mud score · light preview
 - Mixing chart · recipe card export · printable palette chart
@@ -55,7 +55,7 @@ Gouache brand list also includes watercolour lines as planning proxies.
 
 ## Brand palettes
 
-**40 lines** under **Brands** (filtered by medium): watercolour (13), gouache (5 + WC proxies), acrylic (10), oil (6), ink (6).
+**62 lines · ~3,700 paints** under **Brands** and the **Paint library** (filtered by medium): watercolour (22), acrylic (14), oil (9), gouache (8), ink (9).
 
 ## Notes
 
