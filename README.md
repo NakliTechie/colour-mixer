@@ -6,7 +6,7 @@ Single-page planning tool for **watercolour**, **gouache**, **acrylic**, **oil**
 - Five mediums with medium-specific controls, grounds, and tips
 - Limited palette · **62 brand lines** · common names · saved sets · free pickers
 - Paint library: search **~3,700 paints** by name/pigment · single-pigment & property filters · **cross-brand dupe finder** (ΔE)
-- Mixing decks: **themed recipe cards** (skies, foliage, sunsets, skin tones, neutrals…) · engine-mixed swatches · tap to load the recipe
+- Mixing decks: **themed recipe cards** across 5 mediums · engine-mixed swatches · **mix grid** (any two pigments) · **match a colour** (reverse mixing by ΔE) · printable deck sheet
 - Mix recipes with parts + water/dilution, white/black, body
 - Hue wheel (harmony rings) · value strip · mud score · light preview
 - Mixing chart · recipe card export · printable palette chart

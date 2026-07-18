@@ -2209,6 +2209,126 @@ body.help-open {
   font-weight: 600;
 }
 
+.deck-views {
+  margin: 0.3rem 0 0.6rem;
+}
+.deck-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.deck-toolbar .deck-chips {
+  flex: 1 1 auto;
+}
+.print-deck-btn {
+  flex: 0 0 auto;
+}
+.deck-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 4px;
+  padding: 0.05rem 0.3rem;
+  vertical-align: middle;
+}
+
+/* Mix grid */
+.grid-controls {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+.grid-controls .field-label {
+  flex: 1 1 160px;
+}
+.grid-controls select {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--ink);
+  font: inherit;
+  margin-top: 0.2rem;
+}
+.grid-strip {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 0.25rem;
+}
+.grid-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+.grid-sw {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  border: 1px solid rgba(28, 26, 23, 0.18);
+  transition: transform 0.1s ease;
+}
+.grid-cell:hover .grid-sw {
+  transform: scale(1.06);
+  border-color: var(--accent);
+}
+.grid-ratio {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+@media (max-width: 620px) {
+  .grid-strip {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* Match a colour */
+.match-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
+  flex-wrap: wrap;
+}
+.match-controls input[type="color"] {
+  width: 46px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: none;
+  cursor: pointer;
+}
+.match-controls input[type="text"] {
+  width: 8rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--ink);
+  font: inherit;
+  text-transform: uppercase;
+}
+.match-target {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  grid-column: 1 / -1;
+  margin-bottom: 0.2rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
