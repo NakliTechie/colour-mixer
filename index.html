@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#2c3e50" />
   <title>Colour Mixer — Paint &amp; Ink</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='12' cy='14' r='8' fill='%232B4C9B'/%3E%3Ccircle cx='20' cy='18' r='8' fill='%23F2B705' opacity='0.9'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="css/styles.css?v=12" />
+  <link rel="stylesheet" href="css/styles.css?v=16" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
@@ -293,6 +293,99 @@
       </div>
     </details>
 
+    <!-- 4b. Paint library + cross-brand dupe finder -->
+    <details class="panel fold library-panel" id="library-panel">
+      <summary class="fold-summary">
+        <h2 id="library-heading">Paint library</h2>
+        <span class="fold-hint">Search all brands · find dupes</span>
+      </summary>
+      <div class="fold-body">
+        <p class="hint">Search <strong id="lib-total">every</strong> real paint across all brand lines. Filter by pigment or handling properties, then find the closest matches in other brands.</p>
+
+        <div class="lib-controls">
+          <input type="search" id="lib-search" class="lib-search" placeholder="Search name or pigment — e.g. PB29, quinacridone, ultramarine" aria-label="Search paints by name or pigment" />
+          <select id="lib-medium" aria-label="Filter by medium">
+            <option value="all">All mediums</option>
+            <option value="watercolour">Watercolour</option>
+            <option value="gouache">Gouache</option>
+            <option value="acrylic">Acrylic</option>
+            <option value="oil">Oil</option>
+            <option value="ink">Ink</option>
+          </select>
+        </div>
+
+        <div class="lib-filters" role="group" aria-label="Property filters">
+          <label class="lib-check"><input type="checkbox" id="lib-single" /> Single-pigment only</label>
+          <label class="lib-check"><input type="checkbox" id="lib-gran" /> Granulating</label>
+          <select id="lib-opacity" aria-label="Filter by opacity">
+            <option value="">Any opacity</option>
+            <option value="transparent">Transparent</option>
+            <option value="semi">Semi</option>
+            <option value="opaque">Opaque</option>
+          </select>
+          <select id="lib-staining" aria-label="Filter by staining">
+            <option value="">Any staining</option>
+            <option value="low">Low stain</option>
+            <option value="med">Med stain</option>
+            <option value="high">High stain</option>
+          </select>
+        </div>
+
+        <p class="micro lib-count" id="lib-count" aria-live="polite"></p>
+        <div class="lib-results" id="lib-results"></div>
+        <div class="dupe-panel hidden" id="dupe-panel" aria-live="polite"></div>
+        <p class="micro">Dupe matching uses ΔE (CIE76) in Lab across same-medium brand lines. Approximate planning hues — confirm against real swatches.</p>
+      </div>
+    </details>
+
+    <!-- 4c. Mixing decks -->
+    <details class="panel fold decks-panel" id="decks-panel">
+      <summary class="fold-summary">
+        <h2 id="decks-heading">Mixing decks</h2>
+        <span class="fold-hint">Themed recipe cards → tap to mix</span>
+      </summary>
+      <div class="fold-body">
+        <div class="seg-toggle deck-views" role="group" aria-label="Deck view">
+          <button type="button" class="seg-btn is-active" data-deckview="themes" aria-pressed="true">Themes</button>
+          <button type="button" class="seg-btn" data-deckview="grid" aria-pressed="false">Mix grid</button>
+          <button type="button" class="seg-btn" data-deckview="match" aria-pressed="false">Match a colour</button>
+        </div>
+
+        <!-- Themed decks -->
+        <div id="deckview-themes">
+          <p class="hint">Themed cards, each a ready-made recipe across five mediums. Every swatch is mixed by the pigment engine — tap a card to load its paints, ratios and water/white/black into the mixer, then tweak.</p>
+          <div class="deck-toolbar">
+            <div class="deck-chips" id="deck-chips" role="tablist" aria-label="Deck theme"></div>
+            <button type="button" class="btn btn-secondary btn-sm print-deck-btn" id="print-deck">Print deck</button>
+          </div>
+          <p class="micro deck-note" id="deck-note"></p>
+          <div class="deck-grid" id="deck-grid"></div>
+        </div>
+
+        <!-- Mix grid: the full ratio range between two pigments -->
+        <div id="deckview-grid" hidden>
+          <p class="hint">Pick two pigments to see the whole range of mixes between them — from pure A to pure B. Tap any step to load it.</p>
+          <div class="grid-controls">
+            <label class="field-label">Pigment A <select id="grid-a" aria-label="Pigment A"></select></label>
+            <label class="field-label">Pigment B <select id="grid-b" aria-label="Pigment B"></select></label>
+          </div>
+          <div class="grid-strip" id="grid-strip" aria-label="Ratio steps"></div>
+          <p class="micro">Swatches shown at ~35% water. Two-pigment mixes stay cleaner than three.</p>
+        </div>
+
+        <!-- Match a colour: reverse mixing by ΔE -->
+        <div id="deckview-match" hidden>
+          <p class="hint">Pick a target colour; we work out the closest 1–2 pigment recipes to mix it. Tap one to load it.</p>
+          <div class="match-controls">
+            <input type="color" id="match-color" value="#6A8F4A" aria-label="Target colour" />
+            <input type="text" id="match-hex" value="#6A8F4A" maxlength="7" aria-label="Target hex" />
+            <button type="button" class="btn btn-primary btn-sm" id="match-go">Match</button>
+          </div>
+          <div class="deck-grid" id="match-results"></div>
+        </div>
+      </div>
+    </details>
+
     <!-- 5. Studio tools -->
     <details class="panel fold tools-panel" id="tools-panel">
       <summary class="fold-summary">
@@ -483,7 +576,30 @@
         </section>
 
         <section class="help-section">
-          <h3>7. Studio tools</h3>
+          <h3>7. Paint library &amp; dupe finder</h3>
+          <ul>
+            <li><strong>Search</strong> every real paint across all brand lines by name or pigment code (e.g. <code>PB29</code>, <code>quinacridone</code>)</li>
+            <li>Filter by <strong>medium</strong>, <strong>single-pigment only</strong> (cleaner mixers), <strong>opacity</strong>, <strong>staining</strong>, or <strong>granulating</strong></li>
+            <li><strong>Dupes</strong> — pick any paint to see its closest matches in <em>other</em> brand lines of the same medium, ranked by ΔE (CIE76 in Lab)</li>
+            <li>Each dupe shows a <strong>property comparison</strong> — same pigment, opacity, staining, granulation — so you know why a substitute holds up (or won't)</li>
+            <li>No close match? A note suggests mixing the colour from your own palette instead</li>
+            <li><strong>Mix</strong> sends any paint (or dupe) straight into the current mix</li>
+          </ul>
+        </section>
+
+        <section class="help-section">
+          <h3>8. Mixing decks</h3>
+          <p>Three views, switched at the top of the panel:</p>
+          <ul>
+            <li><strong>Themes</strong> — curated recipe cards across all five mediums (skies, foliage, sunsets, autumn, water, skin, neutrals, florals, architecture, landscape, portraits, plus gouache / acrylic / oil decks). Every swatch is <strong>mixed live by the pigment engine</strong>; the recipe shows each paint, its <strong>ratio</strong> (×parts) and the <strong>water / white / black</strong> level. <strong>Print deck</strong> makes a physical card sheet</li>
+            <li><strong>Mix grid</strong> — pick any two pigments to see the full ratio range between them (pure A → pure B), like a systematic mixing chart</li>
+            <li><strong>Match a colour</strong> — reverse mixing: pick a target colour and we find the closest 1–2 pigment recipes by ΔE</li>
+            <li><strong>Tap any card, grid step, or match</strong> to load it into the mixer, then tweak (Undo restores your previous mix)</li>
+          </ul>
+        </section>
+
+        <section class="help-section">
+          <h3>9. Studio tools</h3>
           <ul>
             <li><strong>Mixing chart</strong> — ratio grid from the first two paints in the mix</li>
             <li><strong>Compare A / B</strong> — park two recipes side by side and reload either</li>
@@ -496,7 +612,7 @@
         </section>
 
         <section class="help-section">
-          <h3>8. Saved palettes</h3>
+          <h3>10. Saved palettes</h3>
           <p>
             Under Palette → <strong>Saved</strong>, store the paints currently in your mix as a named set.
             Tap a swatch to add one colour, or load the whole set.
@@ -524,10 +640,12 @@
   <!-- Print-only palette chart -->
   <div id="print-chart-root" class="print-chart-root" aria-hidden="true"></div>
 
-  <script src="vendor/spectral.min.js?v=12"></script>
-  <script src="js/illuminants.js?v=12"></script>
-  <script src="js/palettes.js?v=12"></script>
-  <script src="js/app.js?v=12"></script>
-  <script src="js/studio.js?v=12"></script>
+  <script src="vendor/spectral.min.js?v=16"></script>
+  <script src="js/illuminants.js?v=16"></script>
+  <script src="js/palettes.js?v=16"></script>
+  <script src="js/app.js?v=16"></script>
+  <script src="js/studio.js?v=16"></script>
+  <script src="js/finder.js?v=16"></script>
+  <script src="js/decks.js?v=16"></script>
 </body>
 </html>
