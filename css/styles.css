@@ -2100,6 +2100,115 @@ body.help-open {
   }
 }
 
+/* ——— Mixing decks ——— */
+.deck-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.5rem 0 0.4rem;
+}
+.deck-chip {
+  border: 1px solid var(--line);
+  background: var(--bg-elevated);
+  color: var(--ink-muted);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.deck-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.deck-chip.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.deck-note {
+  margin: 0 0 0.6rem;
+  font-style: italic;
+}
+.deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.5rem;
+}
+.deck-card {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+.deck-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(28, 26, 23, 0.12);
+}
+.deck-swatch {
+  flex: 0 0 64px;
+  align-self: stretch;
+  min-height: 100%;
+  border-right: 1px solid rgba(28, 26, 23, 0.12);
+}
+.deck-card-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 0.6rem;
+}
+.deck-card-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+.deck-recipe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.25rem;
+  font-size: 0.68rem;
+  color: var(--ink-muted);
+  line-height: 1.3;
+}
+.deck-ing {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+.deck-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid rgba(28, 26, 23, 0.25);
+  flex: 0 0 auto;
+}
+.deck-x {
+  font-weight: 700;
+  color: var(--ink);
+  margin-left: 0.1rem;
+}
+.deck-plus {
+  color: var(--ink-muted);
+  opacity: 0.7;
+}
+.deck-water {
+  width: 100%;
+  margin-top: 0.1rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

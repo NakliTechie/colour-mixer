@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#2c3e50" />
   <title>Colour Mixer — Paint &amp; Ink</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='12' cy='14' r='8' fill='%232B4C9B'/%3E%3Ccircle cx='20' cy='18' r='8' fill='%23F2B705' opacity='0.9'/%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="css/styles.css?v=14" />
+  <link rel="stylesheet" href="css/styles.css?v=15" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
@@ -338,6 +338,20 @@
       </div>
     </details>
 
+    <!-- 4c. Mixing decks -->
+    <details class="panel fold decks-panel" id="decks-panel">
+      <summary class="fold-summary">
+        <h2 id="decks-heading">Mixing decks</h2>
+        <span class="fold-hint">Themed recipe cards → tap to mix</span>
+      </summary>
+      <div class="fold-body">
+        <p class="hint">Themed cards, each a ready-made recipe. Every swatch is mixed by the pigment engine — tap a card to load its paints, ratios and water into the mixer, then tweak.</p>
+        <div class="deck-chips" id="deck-chips" role="tablist" aria-label="Deck theme"></div>
+        <p class="micro deck-note" id="deck-note"></p>
+        <div class="deck-grid" id="deck-grid"></div>
+      </div>
+    </details>
+
     <!-- 5. Studio tools -->
     <details class="panel fold tools-panel" id="tools-panel">
       <summary class="fold-summary">
@@ -540,7 +554,17 @@
         </section>
 
         <section class="help-section">
-          <h3>8. Studio tools</h3>
+          <h3>8. Mixing decks</h3>
+          <ul>
+            <li>Themed <strong>recipe cards</strong> (skies, foliage, sunsets, autumn, water, skin tones, neutrals, florals)</li>
+            <li>Each card's swatch is <strong>mixed live by the pigment engine</strong> from its recipe — not a flat printed colour</li>
+            <li>The recipe shows each paint, its <strong>ratio</strong> (×parts), and the <strong>water</strong> level</li>
+            <li><strong>Tap a card</strong> to load those paints, ratios and water into the mixer, then tweak (Undo restores your previous mix)</li>
+          </ul>
+        </section>
+
+        <section class="help-section">
+          <h3>9. Studio tools</h3>
           <ul>
             <li><strong>Mixing chart</strong> — ratio grid from the first two paints in the mix</li>
             <li><strong>Compare A / B</strong> — park two recipes side by side and reload either</li>
@@ -553,7 +577,7 @@
         </section>
 
         <section class="help-section">
-          <h3>9. Saved palettes</h3>
+          <h3>10. Saved palettes</h3>
           <p>
             Under Palette → <strong>Saved</strong>, store the paints currently in your mix as a named set.
             Tap a swatch to add one colour, or load the whole set.
@@ -581,11 +605,12 @@
   <!-- Print-only palette chart -->
   <div id="print-chart-root" class="print-chart-root" aria-hidden="true"></div>
 
-  <script src="vendor/spectral.min.js?v=14"></script>
-  <script src="js/illuminants.js?v=14"></script>
-  <script src="js/palettes.js?v=14"></script>
-  <script src="js/app.js?v=14"></script>
-  <script src="js/studio.js?v=14"></script>
-  <script src="js/finder.js?v=14"></script>
+  <script src="vendor/spectral.min.js?v=15"></script>
+  <script src="js/illuminants.js?v=15"></script>
+  <script src="js/palettes.js?v=15"></script>
+  <script src="js/app.js?v=15"></script>
+  <script src="js/studio.js?v=15"></script>
+  <script src="js/finder.js?v=15"></script>
+  <script src="js/decks.js?v=15"></script>
 </body>
 </html>
