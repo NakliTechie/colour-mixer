@@ -9,7 +9,7 @@ Single-page planning tool for **watercolour**, **gouache**, **acrylic**, **oil**
 - Mixing decks: **themed recipe cards** across 5 mediums · engine-mixed swatches · **mix grid** (any two pigments) · **mix chart** (N×N palette matrix, predicted or blank paint-into template) · **match a colour** (reverse mixing by ΔE) · printable deck sheet
 - Mix recipes with parts + water/dilution, white/black, body
 - Hue wheel (harmony rings) · value strip · mud score · light preview
-- Mixing chart · recipe card export · printable palette chart
+- Ratio strip · recipe card export · printable palette chart
 - Compare A/B · share link + QR · undo/redo
 - Glaze stack · photo match · tips · history
 
