@@ -948,6 +948,57 @@ button.help-chip {
     border-radius: 4px;
     margin-bottom: 3px;
   }
+
+  /* Mix chart — predicted matrix and blank paint-into template */
+  .mc-print-table {
+    display: grid;
+    gap: 2px;
+    margin: 10px 0 4px;
+    break-inside: avoid;
+  }
+  .mc-print-colhead,
+  .mc-print-rowhead {
+    font-size: 7px;
+    font-weight: 700;
+    color: #111;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+  .mc-print-colhead {
+    justify-content: center;
+    text-align: center;
+  }
+  .mc-print-rowhead {
+    justify-content: flex-end;
+    text-align: right;
+    padding-right: 3px;
+    white-space: nowrap;
+  }
+  .mc-print-cell {
+    aspect-ratio: 1 / 1;
+    border: 0.5pt solid #bbb;
+    /* Swatches must survive the browser's "ignore backgrounds" default. */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .mc-print-cell.is-blank {
+    background: #fff;
+    border: 0.5pt solid #999;
+  }
+  .mc-print-key {
+    font-size: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 10px;
+    margin: 4px 0;
+  }
+  .mc-print-caveat {
+    font-size: 8px;
+    color: #444;
+    margin-top: 8px;
+    max-width: 60ch;
+  }
 }
 
 @media (max-width: 520px) {
@@ -2291,6 +2342,87 @@ body.help-open {
 @media (max-width: 620px) {
   .grid-strip {
     grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* Mix chart — N×N palette matrix */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.chart-meta {
+  margin: 0 0 0.5rem;
+}
+.mc-scroll {
+  overflow-x: auto;
+  padding-bottom: 0.3rem;
+}
+.mc-table {
+  display: grid;
+  gap: 2px;
+  align-items: stretch;
+  justify-content: start;
+}
+.mc-corner {
+  min-height: 1.1rem;
+}
+.mc-colhead,
+.mc-rowhead {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+  line-height: 1.15;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+.mc-colhead {
+  justify-content: center;
+  text-align: center;
+  padding-bottom: 0.15rem;
+}
+.mc-rowhead {
+  justify-content: flex-end;
+  text-align: right;
+  padding-right: 0.35rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mc-cell {
+  aspect-ratio: 1 / 1;
+  min-width: 0;
+  border: 1px solid rgba(28, 26, 23, 0.14);
+  border-radius: 3px;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.mc-cell:hover,
+.mc-cell:focus-visible {
+  transform: scale(1.18);
+  box-shadow: 0 2px 8px rgba(28, 26, 23, 0.28);
+  border-color: var(--accent);
+  z-index: 2;
+  position: relative;
+}
+.mc-cell.is-diag {
+  border-color: rgba(28, 26, 23, 0.45);
+  border-width: 2px;
+}
+.chart-actions {
+  margin-top: 0.7rem;
+}
+@media (max-width: 620px) {
+  .mc-colhead,
+  .mc-rowhead {
+    font-size: 0.55rem;
   }
 }
 

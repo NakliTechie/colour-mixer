@@ -8,12 +8,16 @@
  * watercolour / gouache / oil display model so a card previews exactly what
  * loading it produces.
  *
- * Three views:
+ * Four views:
  *   • Themes      — curated recipe cards across all five mediums
  *   • Mix grid    — the full ratio range between any two pigments ("500 mixes")
+ *   • Mix chart   — the classic N×N palette matrix: every pigment against every
+ *                   other, diagonal = masstone. The artefact watercolourists
+ *                   paint by hand from a pan set; here it is predicted first.
  *   • Match colour — reverse mixing: target colour → closest recipes by ΔE
  *
- * Plus a printable card sheet of the current deck.
+ * Plus a printable card sheet of the current deck, and — for the chart —
+ * both a predicted print and a blank labelled template to paint into.
  */
 (function () {
   "use strict";
@@ -439,6 +443,220 @@
     return `${an} ${pa}:${pb} ${bn}`;
   }
 
+  // ——— Mix chart (N×N palette matrix) ———
+  //
+  // The hand-painted version of this chart is asymmetric: the row pigment goes
+  // down first and dominates, so row×col and col×row read differently. A 1:1
+  // digital mix is symmetric and wastes half the chart, so the ratio defaults
+  // to row-dominant 2:1 — both triangles then carry information.
+  //
+  // Owned by studio.js; read-only here so the chart can offer saved sets.
+  const SAVED_KEY = "colour-mixer-saved-palettes-v1";
+  const CHART_MAX = 20;
+  const CHART_RATIOS = { "1:1": [1, 1], "2:1": [2, 1], "3:1": [3, 1] };
+  const CHART_WATERS = { wash: 60, mid: 35, strong: 12 };
+
+  function readSavedSets() {
+    try {
+      const raw = localStorage.getItem(SAVED_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function chartSources() {
+    const limited = (window.PAINT_PALETTES && window.PAINT_PALETTES.limited) || [];
+    const out = [];
+    if (limited.length)
+      out.push({ id: "limited", label: `Limited palette (${limited.length})`, paints: limited.map((p) => ({ name: p.name, hex: p.hex })) });
+    out.push({ id: "core", label: `Core mixing pigments (${PIGMENT_KEYS.length})`, paints: PIGMENT_KEYS.map((k) => ({ name: P[k][0], hex: P[k][1] })) });
+    readSavedSets().forEach((sp, i) => {
+      if (Array.isArray(sp.paints) && sp.paints.length > 1)
+        out.push({ id: "saved:" + i, label: `Saved — ${sp.name} (${sp.paints.length})`, paints: sp.paints.map((p) => ({ name: p.name, hex: p.hex })) });
+    });
+    return out;
+  }
+
+  // "Cobalt Blue" → CB. Collisions widen whichever word actually separates the
+  // clashing names: Cobalt/Cerulean need the head (CoB · CeB), Red/Rose need the
+  // tail (CRe · CRo) — so the ladder walks both.
+  const ABBREV_STEPS = [[1, 1], [2, 1], [1, 2], [2, 2], [3, 2], [2, 3], [3, 3], [4, 3]];
+  function abbrevAt(name, lead, tail) {
+    const words = shortName(name).split(/\s+/).filter(Boolean);
+    if (!words.length) return "?";
+    const cap = (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    if (words.length === 1) return cap(words[0].slice(0, Math.max(2, lead + tail)));
+    return cap(words[0].slice(0, lead)) + words.slice(1).map((w) => cap(w.slice(0, tail))).join("");
+  }
+  function abbrevs(paints) {
+    const labels = paints.map((p) => abbrevAt(p.name, 1, 1));
+    // Re-group every pass: widening one group can collide with an untouched
+    // label, which the next pass then separates in turn.
+    for (let pass = 0; pass < 8; pass++) {
+      const groups = {};
+      labels.forEach((l, i) => (groups[l] = groups[l] || []).push(i));
+      const dupes = Object.keys(groups).filter((k) => groups[k].length > 1);
+      if (!dupes.length) break;
+      dupes.forEach((k) => {
+        const idxs = groups[k];
+        // Take the shortest step that separates the most of the group — a set
+        // holding the same paint twice still separates everything around it.
+        let best = null;
+        for (const s of ABBREV_STEPS) {
+          const trial = idxs.map((i) => abbrevAt(paints[i].name, s[0], s[1]));
+          const distinct = new Set(trial).size;
+          if (!best || distinct > best.distinct) best = { trial, distinct };
+          if (distinct === idxs.length) break;
+        }
+        idxs.forEach((i, n) => (labels[i] = best.trial[n]));
+        // Names that survive identical differ only by a "(cool)" / "(warm)"
+        // qualifier, which shortName() strips — so let it do the separating.
+        const still = {};
+        idxs.forEach((i) => (still[labels[i]] = still[labels[i]] || []).push(i));
+        Object.keys(still).forEach((lbl) => {
+          const grp = still[lbl];
+          if (grp.length < 2) return;
+          const quals = grp.map((i) => qualifier(paints[i].name));
+          if (quals.every(Boolean) && new Set(quals).size === grp.length) {
+            grp.forEach((i, n) => (labels[i] = lbl + quals[n]));
+          } else {
+            grp.forEach((i, n) => { if (n > 0) labels[i] = lbl + (n + 1); });
+          }
+        });
+      });
+    }
+    return labels;
+  }
+
+  function shortName(name) {
+    return String(name || "").replace(/\s*\(.*$/, "").trim();
+  }
+  // "Hansa Yellow (cool)" → "c"
+  function qualifier(name) {
+    const m = String(name || "").match(/\(([^)]+)\)/);
+    return m ? m[1].trim().charAt(0).toLowerCase() : "";
+  }
+
+  function chartRecipe(paints, i, j, ratio, water) {
+    const row = paints[i], col = paints[j];
+    if (i === j)
+      return { name: shortName(row.name), mode: "watercolour", water, mix: [{ name: row.name, hex: row.hex, parts: 1 }] };
+    return {
+      name: `${shortName(row.name)} ${ratio[0]}:${ratio[1]} ${shortName(col.name)}`,
+      mode: "watercolour",
+      water,
+      mix: [
+        { name: row.name, hex: row.hex, parts: ratio[0] },
+        { name: col.name, hex: col.hex, parts: ratio[1] },
+      ],
+    };
+  }
+
+  function chartConfig() {
+    const sources = chartSources();
+    const src = sources.find((s) => s.id === el.chartSource.value) || sources[0];
+    const paints = src.paints.slice(0, CHART_MAX);
+    const ratio = CHART_RATIOS[el.chartRatio.value] || CHART_RATIOS["2:1"];
+    const water = CHART_WATERS[el.chartWater.value] ?? CHART_WATERS.mid;
+    return { src, paints, ratio, water, truncated: src.paints.length - paints.length };
+  }
+
+  function renderChart() {
+    if (!el.chartTable) return;
+    const { src, paints, ratio, water, truncated } = chartConfig();
+    const n = paints.length;
+    if (n < 2) {
+      el.chartTable.innerHTML = `<p class="micro">This set needs at least two paints to chart.</p>`;
+      el.chartTable._recipes = [];
+      el.chartNote.textContent = "";
+      return;
+    }
+    const labels = abbrevs(paints);
+    const recipes = [];
+    // Cells are capped rather than 1fr — a chart you read at a glance, like the
+    // hand-painted original, not nine 100px tiles down a page.
+    let html = `<div class="mc-table" style="grid-template-columns:minmax(64px,124px) repeat(${n},minmax(15px,40px))">`;
+    html += `<div class="mc-corner" aria-hidden="true"></div>`;
+    labels.forEach((l, j) => {
+      html += `<div class="mc-colhead" title="${esc(paints[j].name)}">${esc(l)}</div>`;
+    });
+    for (let i = 0; i < n; i++) {
+      html += `<div class="mc-rowhead" title="${esc(paints[i].name)}">${esc(shortName(paints[i].name))}</div>`;
+      for (let j = 0; j < n; j++) {
+        const recipe = chartRecipe(paints, i, j, ratio, water);
+        const idx = recipes.push(recipe) - 1;
+        const diag = i === j ? " is-diag" : "";
+        html += `<button type="button" class="mc-cell${diag}" data-chart="${idx}" style="background:${esc(previewHex(recipe))}" title="${esc(recipe.name)} — tap to load"><span class="sr-only">${esc(recipe.name)}</span></button>`;
+      }
+    }
+    html += `</div>`;
+    el.chartTable.innerHTML = html;
+    el.chartTable._recipes = recipes;
+
+    const bits = [`${n} × ${n} = ${n * n} mixes`, `row-dominant ${ratio[0]}:${ratio[1]}`, `${water}% water`];
+    if (ratio[0] === ratio[1]) bits[1] = "1:1 — chart is symmetric across the diagonal";
+    if (truncated > 0) bits.push(`${truncated} paint${truncated === 1 ? "" : "s"} beyond the first ${CHART_MAX} not charted`);
+    el.chartNote.textContent = `${src.label.replace(/\s*\(\d+\)$/, "")} · ${bits.join(" · ")}. Diagonal = pure pigment.`;
+  }
+
+  function refreshChartSources() {
+    if (!el.chartSource) return;
+    const prev = el.chartSource.value;
+    const sources = chartSources();
+    el.chartSource.innerHTML = sources.map((s) => `<option value="${esc(s.id)}">${esc(s.label)}</option>`).join("");
+    if (sources.some((s) => s.id === prev)) el.chartSource.value = prev;
+  }
+
+  // ——— Print the chart: predicted colours, or a blank template to paint into ———
+  function printChart(blank) {
+    const root = document.getElementById("print-chart-root");
+    if (!root) return;
+    const { src, paints, ratio, water, truncated } = chartConfig();
+    const n = paints.length;
+    if (n < 2) return;
+    const labels = abbrevs(paints);
+    const cols = `grid-template-columns:minmax(70px,1fr) repeat(${n},1fr)`;
+    let cells = `<div class="mc-print-table" style="${cols}"><div class="mc-print-corner"></div>`;
+    labels.forEach((l, j) => {
+      cells += `<div class="mc-print-colhead" title="${esc(paints[j].name)}">${esc(l)}</div>`;
+    });
+    for (let i = 0; i < n; i++) {
+      cells += `<div class="mc-print-rowhead">${esc(shortName(paints[i].name))}</div>`;
+      for (let j = 0; j < n; j++) {
+        if (blank) {
+          cells += `<div class="mc-print-cell is-blank"></div>`;
+        } else {
+          const recipe = chartRecipe(paints, i, j, ratio, water);
+          cells += `<div class="mc-print-cell" style="background:${esc(previewHex(recipe))}"></div>`;
+        }
+      }
+    }
+    cells += `</div>`;
+
+    const ratioLine = ratio[0] === ratio[1]
+      ? "1:1 mixes — symmetric across the diagonal"
+      : `${ratio[0]}:${ratio[1]} row-dominant — the row pigment leads, so each pair reads twice`;
+    const subtitle = blank
+      ? `Blank template · ${ratioLine} · paint each cell row-pigment first`
+      : `Predicted · ${ratioLine} · ${water}% water · diagonal = pure pigment`;
+
+    root.innerHTML = `
+      <h1>${esc(shortName(src.label))} — mixing chart</h1>
+      <p>Colour Mixer · ${esc(subtitle)}${truncated > 0 ? ` · first ${CHART_MAX} paints only` : ""}</p>
+      ${cells}
+      <h2>Key</h2>
+      <p class="mc-print-key">${labels.map((l, i) => `<span><strong>${esc(l)}</strong> ${esc(shortName(paints[i].name))}</span>`).join("")}</p>
+      <p class="mc-print-caveat">Predicted with Kubelka–Munk pigment mixing. Granulation, separation and staining are not modelled — real paint-outs will bloom and settle where these cells sit flat. Best printed landscape.</p>`;
+    document.body.classList.add("printing-chart");
+    window.print();
+    setTimeout(() => {
+      document.body.classList.remove("printing-chart");
+      root.innerHTML = "";
+    }, 500);
+  }
+
   // ——— Match a colour (reverse mixing) ———
   const MATCH_RATIOS = [[1, 0], [3, 1], [2, 1], [1, 1], [1, 2], [1, 3]];
   const MATCH_WATERS = [8, 30, 52, 70];
@@ -524,7 +742,7 @@
   // ——— View switching ———
   function setView(v) {
     view = v;
-    [["themes", el.vThemes], ["grid", el.vGrid], ["match", el.vMatch]].forEach(([name, node]) => {
+    [["themes", el.vThemes], ["grid", el.vGrid], ["chart", el.vChart], ["match", el.vMatch]].forEach(([name, node]) => {
       if (node) node.hidden = name !== v;
     });
     el.viewBtns.forEach((b) => {
@@ -534,6 +752,7 @@
     });
     if (v === "themes") { renderChips(); renderThemeCards(); }
     else if (v === "grid") renderGrid();
+    else if (v === "chart") { refreshChartSources(); renderChart(); }
     else if (v === "match") renderMatch();
   }
 
@@ -544,6 +763,7 @@
     el.viewBtns = Array.from(el.panel.querySelectorAll("[data-deckview]"));
     el.vThemes = document.getElementById("deckview-themes");
     el.vGrid = document.getElementById("deckview-grid");
+    el.vChart = document.getElementById("deckview-chart");
     el.vMatch = document.getElementById("deckview-match");
     el.chips = document.getElementById("deck-chips");
     el.note = document.getElementById("deck-note");
@@ -552,6 +772,13 @@
     el.gridA = document.getElementById("grid-a");
     el.gridB = document.getElementById("grid-b");
     el.gridStrip = document.getElementById("grid-strip");
+    el.chartSource = document.getElementById("chart-source");
+    el.chartRatio = document.getElementById("chart-ratio");
+    el.chartWater = document.getElementById("chart-water");
+    el.chartTable = document.getElementById("chart-table");
+    el.chartNote = document.getElementById("chart-note");
+    el.chartPrint = document.getElementById("print-chart");
+    el.chartPrintBlank = document.getElementById("print-chart-blank");
     el.matchColor = document.getElementById("match-color");
     el.matchHex = document.getElementById("match-hex");
     el.matchGo = document.getElementById("match-go");
@@ -588,6 +815,19 @@
         const rec = recipes[Number(btn.dataset.grid)];
         if (rec) loadRecipe(rec);
       });
+    }
+
+    if (el.chartTable) {
+      refreshChartSources();
+      [el.chartSource, el.chartRatio, el.chartWater].forEach((c) => c && c.addEventListener("change", renderChart));
+      el.chartTable.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-chart]");
+        if (!btn) return;
+        const rec = (el.chartTable._recipes || [])[Number(btn.dataset.chart)];
+        if (rec) loadRecipe(rec);
+      });
+      if (el.chartPrint) el.chartPrint.addEventListener("click", () => printChart(false));
+      if (el.chartPrintBlank) el.chartPrintBlank.addEventListener("click", () => printChart(true));
     }
 
     if (el.matchGo) {

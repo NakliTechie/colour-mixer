@@ -349,6 +349,7 @@
         <div class="seg-toggle deck-views" role="group" aria-label="Deck view">
           <button type="button" class="seg-btn is-active" data-deckview="themes" aria-pressed="true">Themes</button>
           <button type="button" class="seg-btn" data-deckview="grid" aria-pressed="false">Mix grid</button>
+          <button type="button" class="seg-btn" data-deckview="chart" aria-pressed="false">Mix chart</button>
           <button type="button" class="seg-btn" data-deckview="match" aria-pressed="false">Match a colour</button>
         </div>
 
@@ -372,6 +373,35 @@
           </div>
           <div class="grid-strip" id="grid-strip" aria-label="Ratio steps"></div>
           <p class="micro">Swatches shown at ~35% water. Two-pigment mixes stay cleaner than three.</p>
+        </div>
+
+        <!-- Mix chart: the classic N×N palette matrix -->
+        <div id="deckview-chart" hidden>
+          <p class="hint">Every paint in a set mixed against every other — the chart watercolourists paint by hand from a pan set. The diagonal is pure pigment; each row runs that pigment against the whole palette. Tap any cell to load it.</p>
+          <div class="grid-controls chart-controls">
+            <label class="field-label">Paint set <select id="chart-source" aria-label="Paint set"></select></label>
+            <label class="field-label">Ratio
+              <select id="chart-ratio" aria-label="Row-to-column ratio">
+                <option value="2:1" selected>2:1 row-dominant</option>
+                <option value="3:1">3:1 row-dominant</option>
+                <option value="1:1">1:1 even</option>
+              </select>
+            </label>
+            <label class="field-label">Strength
+              <select id="chart-water" aria-label="Wash strength">
+                <option value="wash">Wash (60% water)</option>
+                <option value="mid" selected>Mid (35% water)</option>
+                <option value="strong">Strong (12% water)</option>
+              </select>
+            </label>
+          </div>
+          <p class="micro chart-meta" id="chart-note"></p>
+          <div class="mc-scroll"><div id="chart-table" aria-label="Mixing chart"></div></div>
+          <div class="row-actions chart-actions">
+            <button type="button" class="btn btn-secondary btn-sm" id="print-chart">Print chart</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="print-chart-blank">Print blank template</button>
+          </div>
+          <p class="micro">Granulation, separation and staining aren’t modelled — real paint-outs will bloom and settle where these cells sit flat. Print the blank template to paint your own alongside.</p>
         </div>
 
         <!-- Match a colour: reverse mixing by ΔE -->
@@ -592,12 +622,13 @@
 
         <section class="help-section">
           <h3>8. Mixing decks</h3>
-          <p>Three views, switched at the top of the panel:</p>
+          <p>Four views, switched at the top of the panel:</p>
           <ul>
             <li><strong>Themes</strong> — curated recipe cards across all five mediums (skies, foliage, sunsets, autumn, water, skin, neutrals, florals, architecture, landscape, portraits, plus gouache / acrylic / oil decks). Every swatch is <strong>mixed live by the pigment engine</strong>; the recipe shows each paint, its <strong>ratio</strong> (×parts) and the <strong>water / white / black</strong> level. <strong>Print deck</strong> makes a physical card sheet</li>
             <li><strong>Mix grid</strong> — pick any two pigments to see the full ratio range between them (pure A → pure B), like a systematic mixing chart</li>
+            <li><strong>Mix chart</strong> — the classic <strong>N×N palette matrix</strong>: every paint in a set against every other, diagonal = pure pigment. Chart the limited palette, the core pigment list, or any <strong>saved set</strong> (so you can chart your own paint box). The ratio defaults to <strong>2:1 row-dominant</strong>, matching a hand-painted chart where the row pigment goes down first — so each pair reads twice, once per triangle; choose 1:1 and the chart becomes symmetric. <strong>Print chart</strong> gives the predicted version, <strong>Print blank template</strong> a labelled empty grid to paint into</li>
             <li><strong>Match a colour</strong> — reverse mixing: pick a target colour and we find the closest 1–2 pigment recipes by ΔE</li>
-            <li><strong>Tap any card, grid step, or match</strong> to load it into the mixer, then tweak (Undo restores your previous mix)</li>
+            <li><strong>Tap any card, grid step, chart cell, or match</strong> to load it into the mixer, then tweak (Undo restores your previous mix)</li>
           </ul>
         </section>
 
