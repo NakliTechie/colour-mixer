@@ -233,12 +233,17 @@
     </section>
 
     <!-- 3. Glaze (near mix) -->
-    <section class="panel glaze-panel" id="glaze-panel" aria-labelledby="glaze-heading">
-      <div class="panel-head">
+    <!-- Collapsed by default: unusable until there's a mix to glaze. -->
+    <details class="panel fold glaze-panel" id="glaze-panel" aria-labelledby="glaze-heading">
+      <summary class="fold-summary">
         <h2 id="glaze-heading">Glaze stack</h2>
+        <span class="fold-hint">Optical layers over a ground</span>
+      </summary>
+      <div class="fold-body">
+      <div class="panel-head">
+        <p class="hint">Optical layers over a ground. Bottom first — like painting on paper or canvas.</p>
         <button type="button" class="btn btn-ghost btn-sm" id="clear-glaze">Clear stack</button>
       </div>
-      <p class="hint">Optical layers over a ground. Bottom first — like painting on paper or canvas.</p>
 
       <label class="field-label" for="ground-select">Ground</label>
       <select id="ground-select">
@@ -264,7 +269,8 @@
           <button type="button" class="btn btn-ghost btn-sm" id="use-glaze-as-mix" disabled>Use as mix base</button>
         </div>
       </div>
-    </section>
+      </div><!-- /.fold-body -->
+    </details>
     </div><!-- /.primary-stage -->
 
     <!-- 4. Reference (foldable on mobile) -->
@@ -357,6 +363,7 @@
           <button type="button" class="seg-btn is-active" data-deckview="themes" aria-pressed="true">Themes</button>
           <button type="button" class="seg-btn" data-deckview="grid" aria-pressed="false">Two paints</button>
           <button type="button" class="seg-btn" data-deckview="chart" aria-pressed="false">Whole palette</button>
+          <button type="button" class="seg-btn" data-deckview="photo" aria-pressed="false">From a photo</button>
           <button type="button" class="seg-btn" data-deckview="match" aria-pressed="false">Match a colour</button>
         </div>
 
@@ -409,6 +416,28 @@
             <button type="button" class="btn btn-secondary btn-sm" id="print-chart-blank">Print blank template</button>
           </div>
           <p class="micro">Granulation, separation and staining aren’t modelled — real paint-outs will bloom and settle where these cells sit flat. Print the blank template to paint your own alongside.</p>
+        </div>
+
+        <!-- From a photo: sample a colour off an image, then reverse-plan it -->
+        <div id="deckview-photo" hidden>
+          <p class="hint">Sample a colour straight off an image, then reverse-plan a mix for it from your palette. A photo is often the fastest way in — match what you can see.</p>
+            <p class="micro">Sample a colour, then reverse-plan a mix from your palette.</p>
+            <label class="file-btn btn btn-secondary">
+              Choose image
+              <input type="file" id="photo-input" accept="image/*" hidden />
+            </label>
+            <div class="photo-workspace hidden" id="photo-workspace">
+              <canvas id="photo-canvas" width="320" height="240" aria-label="Click to sample colour"></canvas>
+              <p class="micro">Click the image to sample.</p>
+              <div class="sample-row">
+                <div class="sample-swatch" id="sample-swatch"></div>
+                <div>
+                  <code id="sample-hex">—</code>
+                  <button type="button" class="btn btn-secondary btn-sm" id="sample-to-mix" disabled>Add sample to mix</button>
+                </div>
+              </div>
+              <div id="match-suggestions" class="match-suggestions"></div>
+            </div>
         </div>
 
         <!-- Match a colour: reverse mixing by ΔE -->
@@ -467,30 +496,12 @@
               <button type="button" class="btn btn-secondary btn-sm" id="print-palette-chart">Print palette chart</button>
               <button type="button" class="btn btn-ghost btn-sm" id="show-share-qr" disabled>Share QR</button>
             </div>
+            <!-- Index, not a relocation: each printer below needs the state of
+                 the panel it lives in, so it stays there. -->
+            <p class="micro print-index">Also printable, from <strong>Mixing decks</strong>: <em>Print deck</em> (Themes) · <em>Print chart</em> and <em>Print blank template</em> (Whole palette). Each prints what that view is currently showing, so they live with their controls.</p>
             <div id="share-qr-wrap" class="share-qr-wrap hidden">
               <img id="share-qr-img" alt="QR code for this mix" width="160" height="160" />
               <p class="micro" id="share-url-text"></p>
-            </div>
-          </div>
-
-          <div class="tool-card">
-            <h3>Match from photo</h3>
-            <p class="micro">Sample a colour, then reverse-plan a mix from your palette.</p>
-            <label class="file-btn btn btn-secondary">
-              Choose image
-              <input type="file" id="photo-input" accept="image/*" hidden />
-            </label>
-            <div class="photo-workspace hidden" id="photo-workspace">
-              <canvas id="photo-canvas" width="320" height="240" aria-label="Click to sample colour"></canvas>
-              <p class="micro">Click the image to sample.</p>
-              <div class="sample-row">
-                <div class="sample-swatch" id="sample-swatch"></div>
-                <div>
-                  <code id="sample-hex">—</code>
-                  <button type="button" class="btn btn-secondary btn-sm" id="sample-to-mix" disabled>Add sample to mix</button>
-                </div>
-              </div>
-              <div id="match-suggestions" class="match-suggestions"></div>
             </div>
           </div>
 
@@ -598,6 +609,7 @@
 
         <section class="help-section">
           <h3>5. Glaze stack</h3>
+          <p class="micro">Folded away by default — open it once you have a mix worth layering.</p>
           <ul>
             <li>Pick a <strong>ground</strong> (paper, canvas, linen, toned panel…)</li>
             <li>Layers stack bottom → top with per-layer strength</li>
@@ -629,11 +641,12 @@
 
         <section class="help-section">
           <h3>8. Mixing decks</h3>
-          <p>Four views, switched at the top of the panel:</p>
+          <p>Five views, switched at the top of the panel:</p>
           <ul>
             <li><strong>Themes</strong> — curated recipe cards across all five mediums (skies, foliage, sunsets, autumn, water, skin, neutrals, florals, architecture, landscape, portraits, plus gouache / acrylic / oil decks). Every swatch is <strong>mixed live by the pigment engine</strong>; the recipe shows each paint, its <strong>ratio</strong> (×parts) and the <strong>water / white / black</strong> level. <strong>Print deck</strong> makes a physical card sheet</li>
             <li><strong>Two paints</strong> — pick any two pigments to see the full ratio range between them (pure A → pure B), like a systematic mixing chart</li>
             <li><strong>Whole palette</strong> — the classic <strong>N×N palette matrix</strong>: every paint in a set against every other, diagonal = pure pigment. Chart the limited palette, the core pigment list, or any <strong>saved set</strong> (so you can chart your own paint box). The ratio defaults to <strong>2:1 row-dominant</strong>, matching a hand-painted chart where the row pigment goes down first — so each pair reads twice, once per triangle; choose 1:1 and the chart becomes symmetric. <strong>Print chart</strong> gives the predicted version, <strong>Print blank template</strong> a labelled empty grid to paint into</li>
+            <li><strong>From a photo</strong> — sample a colour straight off an image, then reverse-plan a mix for it from your palette</li>
             <li><strong>Match a colour</strong> — reverse mixing: pick a target colour and we find the closest 1–2 pigment recipes by ΔE</li>
             <li><strong>Tap any card, grid step, chart cell, or match</strong> to load it into the mixer, then tweak (Undo restores your previous mix)</li>
           </ul>
@@ -646,7 +659,6 @@
             <li><strong>Compare A / B</strong> — park two recipes side by side and reload either</li>
             <li><strong>Print palette chart</strong> — limited tubes + sample 1:1 mixes</li>
             <li><strong>Share QR</strong> — same share link as a QR image</li>
-            <li><strong>Match from photo</strong> — sample a colour, get suggested limited-palette recipes</li>
             <li><strong>Tips</strong> — medium-specific mixing advice</li>
             <li><strong>History</strong> — reload past saves from this browser</li>
           </ul>

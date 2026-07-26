@@ -1453,6 +1453,9 @@
     renderGlaze();
     toast("Glaze layer added");
     if (el.glazePanel) {
+      // The panel is folded by default, but "Add glaze" lives over in the mix —
+      // open it so the layer you just added is actually visible.
+      if (el.glazePanel.tagName === "DETAILS") el.glazePanel.open = true;
       el.glazePanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   }

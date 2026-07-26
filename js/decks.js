@@ -742,7 +742,7 @@
   // ——— View switching ———
   function setView(v) {
     view = v;
-    [["themes", el.vThemes], ["grid", el.vGrid], ["chart", el.vChart], ["match", el.vMatch]].forEach(([name, node]) => {
+    [["themes", el.vThemes], ["grid", el.vGrid], ["chart", el.vChart], ["photo", el.vPhoto], ["match", el.vMatch]].forEach(([name, node]) => {
       if (node) node.hidden = name !== v;
     });
     el.viewBtns.forEach((b) => {
@@ -764,6 +764,8 @@
     el.vThemes = document.getElementById("deckview-themes");
     el.vGrid = document.getElementById("deckview-grid");
     el.vChart = document.getElementById("deckview-chart");
+    // Photo match: markup lives here, behaviour stays bound by id in studio.js.
+    el.vPhoto = document.getElementById("deckview-photo");
     el.vMatch = document.getElementById("deckview-match");
     el.chips = document.getElementById("deck-chips");
     el.note = document.getElementById("deck-note");
