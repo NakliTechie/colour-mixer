@@ -1,0 +1,19 @@
+# Colour Mixer
+
+> A single-page planning tool for real paint mixing across watercolour, gouache, acrylic, oil and ink. Pigment-aware blending via spectral.js (Kubelka–Munk), so blue and yellow make green the way paint does, not the way screens do. Everything runs in the browser; nothing is uploaded and no account is needed.
+
+Colour Mixer is for planning a mix before you commit pigment to paper. Build a recipe from a limited palette or any of 62 brand lines, set water or body, and see the predicted result under CIE daylight. Results are planning approximations — granulation, separation and staining are not modelled.
+
+## Features
+
+- [Mix](https://mixer.naklitechie.com/#mixer): build a recipe from 1–4 paints with ratio parts, water/white/black, and a live pigment-mixed result
+- [Paint library](https://mixer.naklitechie.com/): search ~3,700 real paints by name or pigment code, filter by handling properties, and find cross-brand dupes by ΔE
+- [Mixing decks](https://mixer.naklitechie.com/): themed recipe cards, plus "Two paints" (every ratio between two pigments), "Whole palette" (the N×N mixing chart, predicted or as a blank template to paint into), "From a photo", and "Match a colour" (reverse mixing by ΔE)
+- [Studio tools](https://mixer.naklitechie.com/): ratio strip, A/B compare, printable palette chart, tips, and mix history
+
+## About
+
+- [Source code](https://github.com/NakliTechie/colour-mixer): public, and the whole app is static HTML, CSS and JavaScript
+- [spectral.js](https://github.com/rvanwijnen/spectral.js): the Kubelka–Munk pigment mixing library behind every swatch
+- [Hue & Cry](https://hueandcry.naklitechie.com/): sister tool — Sanzo Wada colour combinations from a photograph
+- [Rangrez](https://rangrez.naklitechie.com/): sister tool
