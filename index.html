@@ -11,8 +11,8 @@
        the two latin files means they land before first paint, so no swap. -->
   <link rel="preload" href="fonts/dm-sans-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="fonts/fraunces-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="css/fonts.css?v=21" />
-  <link rel="stylesheet" href="css/styles.css?v=21" />
+  <link rel="stylesheet" href="css/fonts.css?v=23" />
+  <link rel="stylesheet" href="css/styles.css?v=23" />
 </head>
 <body data-mode="watercolour">
   <a class="skip-link" href="#mixer">Skip to mixer</a>
@@ -27,8 +27,6 @@
         <button type="button" class="sister-chip help-chip" id="open-help" aria-haspopup="dialog" aria-controls="help-modal">
           Help
         </button>
-        <a class="sister-chip" href="https://hueandcry.naklitechie.com/" target="_blank" rel="noopener">Hue &amp; Cry ↗</a>
-        <a class="sister-chip" href="https://rangrez.naklitechie.com/" target="_blank" rel="noopener">Rangrez ↗</a>
       </div>
     </div>
 
@@ -68,7 +66,23 @@
       </div>
 
       <div class="palette-body">
-        <div id="palette-limited" class="palette-grid" role="tabpanel"></div>
+        <!-- Pre-rendered so the grid has its real height at first paint. app.js
+             re-renders this from PAINT_PALETTES.limited on load, so these are a
+             layout placeholder, not the source of truth — if the limited palette
+             changes, the visible result still self-corrects; only the pre-paint
+             reservation would be briefly stale. Prevents the mix panel being
+             shoved down when the swatches inject (CLS).  -->
+        <div id="palette-limited" class="palette-grid" role="tabpanel">
+          <button type="button" class="swatch-btn" title="Hansa Yellow (cool) — Cool yellow — clean greens with phthalo — #F5D031"><span class="chip" style="background:#F5D031"></span><span class="label">Hansa Yellow (cool)<span class="paint-tags"><span class="ptag">transp.</span><span class="ptag">stain:med</span></span></span></button>
+          <button type="button" class="swatch-btn" title="Cadmium Yellow (warm) — Warm yellow — oranges with warm red — #F2B705"><span class="chip" style="background:#F2B705"></span><span class="label">Cadmium Yellow (warm)<span class="paint-tags"><span class="ptag">opaque</span><span class="ptag">stain:low</span></span></span></button>
+          <button type="button" class="swatch-btn" title="Pyrrole Red (warm) — Warm red — lively oranges — #E23C28"><span class="chip" style="background:#E23C28"></span><span class="label">Pyrrole Red (warm)<span class="paint-tags"><span class="ptag">semi</span><span class="ptag">stain:med</span></span></span></button>
+          <button type="button" class="swatch-btn" title="Quinacridone Rose (cool) — Cool red/magenta — clean purples — #C4356A"><span class="chip" style="background:#C4356A"></span><span class="label">Quinacridone Rose (cool)<span class="paint-tags"><span class="ptag">transp.</span><span class="ptag">stain:high</span></span></span></button>
+          <button type="button" class="swatch-btn" title="Ultramarine Blue (warm) — Warm blue — violets with rose — #2B4C9B"><span class="chip" style="background:#2B4C9B"></span><span class="label">Ultramarine Blue (warm)<span class="paint-tags"><span class="ptag">transp.</span><span class="ptag">stain:low</span><span class="ptag">gran.</span></span></span></button>
+          <button type="button" class="swatch-btn" title="Phthalo Blue (cool) — Cool blue — strong tinting; use sparingly — #0A4D8C"><span class="chip" style="background:#0A4D8C"></span><span class="label">Phthalo Blue (cool)<span class="paint-tags"><span class="ptag">transp.</span><span class="ptag">stain:high</span></span></span></button>
+          <button type="button" class="swatch-btn" title="Burnt Sienna — Warm earth — neutrals with ultramarine — #8A3B1E"><span class="chip" style="background:#8A3B1E"></span><span class="label">Burnt Sienna<span class="paint-tags"><span class="ptag">semi</span><span class="ptag">stain:med</span><span class="ptag">gran.</span></span></span></button>
+          <button type="button" class="swatch-btn" title="Yellow Ochre — Muted yellow earth — #C9953B"><span class="chip" style="background:#C9953B"></span><span class="label">Yellow Ochre<span class="paint-tags"><span class="ptag">opaque</span><span class="ptag">stain:low</span><span class="ptag">gran.</span></span></span></button>
+          <button type="button" class="swatch-btn" title="Payne&#39;s Grey — Cool dark — softer than black — #3D4A5C"><span class="chip" style="background:#3D4A5C"></span><span class="label">Payne&#39;s Grey<span class="paint-tags"><span class="ptag">semi</span><span class="ptag">stain:med</span></span></span></button>
+        </div>
         <div id="palette-brands" class="brands-panel hidden" role="tabpanel" hidden>
           <label class="field-label brand-select-label" for="brand-select">Brand line</label>
           <select id="brand-select" aria-label="Brand palette"></select>
@@ -717,12 +731,12 @@
   <!-- Print-only palette chart -->
   <div id="print-chart-root" class="print-chart-root" aria-hidden="true"></div>
 
-  <script defer src="vendor/spectral.min.js?v=21"></script>
-  <script defer src="js/illuminants.js?v=21"></script>
-  <script defer src="js/palettes.js?v=21"></script>
-  <script defer src="js/app.js?v=21"></script>
-  <script defer src="js/studio.js?v=21"></script>
-  <script defer src="js/finder.js?v=21"></script>
-  <script defer src="js/decks.js?v=21"></script>
+  <script defer src="vendor/spectral.min.js?v=23"></script>
+  <script defer src="js/illuminants.js?v=23"></script>
+  <script defer src="js/palettes.js?v=23"></script>
+  <script defer src="js/app.js?v=23"></script>
+  <script defer src="js/studio.js?v=23"></script>
+  <script defer src="js/finder.js?v=23"></script>
+  <script defer src="js/decks.js?v=23"></script>
 </body>
 </html>
