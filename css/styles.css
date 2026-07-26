@@ -1946,6 +1946,46 @@ body.help-open {
   }
 }
 
+/* Prompt modal — small text-entry dialog, shares the help modal chrome */
+.prompt-overlay {
+  align-items: center;
+  z-index: 90;
+}
+
+.prompt-dialog {
+  width: min(420px, 100%);
+}
+
+.prompt-dialog .help-dialog-head h2 {
+  font-size: 1.1rem;
+}
+
+.prompt-dialog .help-dialog-body {
+  padding-bottom: 1rem;
+}
+
+.prompt-input {
+  width: 100%;
+  margin-top: 0.35rem;
+}
+
+.prompt-hint {
+  margin: 0.5rem 0 0;
+}
+
+.prompt-hint:empty {
+  display: none;
+}
+
+.prompt-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.85rem 1.15rem;
+  border-top: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
 /* ——— Paint library + dupe finder ——— */
 .lib-controls {
   display: flex;

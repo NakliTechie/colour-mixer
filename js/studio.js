@@ -524,7 +524,7 @@
       .join("");
   }
 
-  function saveCurrentPalette() {
+  async function saveCurrentPalette() {
     const M = core();
     if (!M) return;
     const st = M.getState();
@@ -532,11 +532,14 @@
       M.toast("Add paints first");
       return;
     }
-    const name = prompt(
-      "Name this palette set",
-      `Set ${new Date().toLocaleDateString()}`
-    );
-    if (!name) return;
+    const name = await promptModal({
+      title: "Name this palette set",
+      label: "Set name",
+      hint: `${st.slots.length} paint${st.slots.length === 1 ? "" : "s"} · saved on this device only, newest 20 kept`,
+      value: `Set ${new Date().toLocaleDateString()}`,
+      confirmLabel: "Save set",
+    });
+    if (!name || !name.trim()) return;
     const saved = loadJSON(SAVED_KEY, []);
     saved.unshift({
       id: "sp-" + Date.now(),
@@ -816,8 +819,125 @@
     }
   }
 
+  // ——— Prompt modal (in-app replacement for window.prompt) ———
+  let promptState = null;
+
+  function promptModal(opts) {
+    const o = opts || {};
+    const modal = $("#prompt-modal");
+    const input = $("#prompt-modal-input");
+    if (!modal || !input || promptState) return Promise.resolve(null);
+
+    const set = (sel, text) => {
+      const el = $(sel);
+      if (el) el.textContent = text;
+    };
+    set("#prompt-modal-title", o.title || "Name");
+    set("#prompt-modal-label", o.label || o.title || "Name");
+    set("#prompt-modal-hint", o.hint || "");
+    set("#prompt-modal-confirm", o.confirmLabel || "Save");
+    input.value = o.value || "";
+    syncPromptConfirm();
+
+    const lastFocus = document.activeElement;
+    modal.hidden = false;
+    document.body.classList.add("help-open");
+    input.focus();
+    input.select();
+
+    return new Promise((resolve) => {
+      promptState = { resolve, lastFocus };
+    });
+  }
+
+  function closePrompt(value) {
+    const st = promptState;
+    promptState = null;
+    const modal = $("#prompt-modal");
+    if (modal) modal.hidden = true;
+    const help = $("#help-modal");
+    if (!help || help.hidden) document.body.classList.remove("help-open");
+    if (st) {
+      if (st.lastFocus && typeof st.lastFocus.focus === "function") {
+        st.lastFocus.focus();
+      }
+      st.resolve(value);
+    }
+  }
+
+  function syncPromptConfirm() {
+    const input = $("#prompt-modal-input");
+    const btn = $("#prompt-modal-confirm");
+    if (input && btn) btn.disabled = !input.value.trim();
+  }
+
+  function trapPromptTab(e) {
+    const dialog = $("#prompt-modal .prompt-dialog");
+    if (!dialog) return;
+    const focusable = Array.from(
+      dialog.querySelectorAll("button:not([disabled]), input:not([disabled])")
+    ).filter((el) => el.offsetParent !== null);
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+    if (e.shiftKey && (active === first || !dialog.contains(active))) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+
+  function bindPromptModal() {
+    const modal = $("#prompt-modal");
+    if (!modal) return;
+    // Resolve-inside-a-handler: never let a throw leave the promise pending.
+    const settle = (value) => {
+      try {
+        closePrompt(value);
+      } catch (err) {
+        console.error("[prompt-modal]", err);
+        promptState = null;
+        modal.hidden = true;
+        document.body.classList.remove("help-open");
+      }
+    };
+
+    const accept = () => {
+      const value = $("#prompt-modal-input")?.value ?? ""; // capture before teardown
+      if (!value.trim()) return;
+      settle(value);
+    };
+
+    $("#prompt-modal-form")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      accept();
+    });
+    $("#prompt-modal-input")?.addEventListener("input", syncPromptConfirm);
+    $("#prompt-modal-cancel")?.addEventListener("click", () => settle(null));
+    $("#prompt-modal-close")?.addEventListener("click", () => settle(null));
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) settle(null);
+    });
+    modal.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        settle(null);
+      } else if (e.key === "Enter" && e.target === $("#prompt-modal-input")) {
+        // Don't rely on implicit form submission from a single text field.
+        e.preventDefault();
+        accept();
+      } else if (e.key === "Tab") {
+        trapPromptTab(e);
+      }
+    });
+  }
+
   function bind() {
     document.addEventListener("mixer:update", onMixerUpdate);
+    bindPromptModal();
 
     $("#open-help")?.addEventListener("click", openHelp);
     $("#open-help-footer")?.addEventListener("click", openHelp);
