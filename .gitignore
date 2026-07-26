@@ -4,3 +4,6 @@ tweet-screenshot*.png
 
 # Local working notes
 plan/
+
+# Autopilot worktrees
+.worktrees/
