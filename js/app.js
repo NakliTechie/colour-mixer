@@ -1355,10 +1355,12 @@
   }
 
   // ——— Actions ———
+  // Returns true if the paint landed, false if the mix was already full — so
+  // callers don't announce a success that didn't happen.
   function addToMix(paint, opts = {}) {
     if (state.slots.length >= MAX_SLOTS) {
       toast(`Max ${MAX_SLOTS} paints in a mix`);
-      return;
+      return false;
     }
     if (!opts.skipUndo) pushUndo();
     // If same paint already in mix, bump parts
@@ -1377,6 +1379,7 @@
       });
     }
     renderAll();
+    return true;
   }
 
   function clearMix() {

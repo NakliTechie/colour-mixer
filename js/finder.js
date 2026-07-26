@@ -223,11 +223,14 @@
   }
 
   function renderDupes(target) {
-    // Dupes are drawn from OTHER brands in the SAME medium.
+    // Dupes are drawn from OTHER brands in the SAME medium. Excluding only
+    // brand+line let a manufacturer's second range through — Winsor & Newton
+    // Professional returned W&N Cotman as its closest "dupe", which is the
+    // opposite of what the tool is for. Exclude the whole brand.
     const scored = PAINTS.filter(
       (p) =>
         p.medium === target.medium &&
-        !(p.brand === target.brand && p.line === target.line) &&
+        p.brand !== target.brand &&
         !(p.name === target.name && p.hex === target.hex)
     )
       .map((p) => ({ p, dE: deltaE(p.lab, target.lab) }))
@@ -321,12 +324,13 @@
   function addToMix(p) {
     const M = core();
     if (!M) return;
-    M.addToMix({
+    const added = M.addToMix({
       name: p.name,
       hex: p.hex,
       note: [p.brand, p.line].filter(Boolean).join(" · "),
     });
-    M.toast(`Added ${p.name} to mix`);
+    // A full mix already toasted "Max 4 paints" — don't overwrite it with a lie.
+    if (added !== false) M.toast(`Added ${p.name} to mix`);
   }
 
   // ——— Wire ———
