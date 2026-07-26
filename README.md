@@ -6,10 +6,10 @@ Single-page planning tool for **watercolour**, **gouache**, **acrylic**, **oil**
 - Five mediums with medium-specific controls, grounds, and tips
 - Limited palette · **62 brand lines** · common names · saved sets · free pickers
 - Paint library: search **~3,700 paints** by name/pigment · single-pigment & property filters · **cross-brand dupe finder** (ΔE)
-- Mixing decks: **themed recipe cards** across 5 mediums · engine-mixed swatches · **mix grid** (any two pigments) · **mix chart** (N×N palette matrix, predicted or blank paint-into template) · **match a colour** (reverse mixing by ΔE) · printable deck sheet
+- Mixing decks: **themed recipe cards** across 5 mediums · engine-mixed swatches · **two paints** (every ratio between two pigments) · **whole palette** (the N×N mixing chart, predicted or as a blank paint-into template) · **from a photo** · **match a colour** (reverse mixing by ΔE) · printable deck sheet
 - Mix recipes with parts + water/dilution, white/black, body
 - Hue wheel (harmony rings) · value strip · mud score · light preview
-- Ratio strip · recipe card export · printable palette chart
+- Ratio sweep for the current mix · recipe card export · printable palette chart
 - Compare A/B · share link + QR · undo/redo
 - Glaze stack · photo match · tips · history
 
