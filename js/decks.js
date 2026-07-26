@@ -691,7 +691,16 @@
     return "loose";
   }
   function renderMatch() {
-    const hex = normalizeHexInput(el.matchHex.value) || el.matchColor.value;
+    // An unparseable hex silently fell back to the picker's colour, so you got
+    // results for a colour you never typed. Say so and re-sync the field.
+    const typed = el.matchHex.value.trim();
+    const parsed = normalizeHexInput(typed);
+    if (typed && !parsed) {
+      const M = core();
+      if (M && typeof M.toast === "function") M.toast(`“${typed}” isn’t a hex colour — using ${el.matchColor.value.toUpperCase()}`);
+    }
+    const hex = parsed || el.matchColor.value;
+    el.matchHex.value = hex.toUpperCase();
     const results = matchColour(hex);
     el.matchResults.innerHTML =
       `<div class="match-target"><span class="lib-chip" style="background:${esc(hex)}"></span><span class="micro">Target ${esc(hex.toUpperCase())} — closest 1–2 pigment recipes:</span></div>` +
