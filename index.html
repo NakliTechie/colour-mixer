@@ -13,7 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
 </head>
 <body data-mode="watercolour">
-  <a class="skip-link" href="#main">Skip to mixer</a>
+  <a class="skip-link" href="#mixer">Skip to mixer</a>
 
   <header class="site-header">
     <div class="brand-row">
@@ -102,7 +102,8 @@
     </section>
 
     <!-- 2. Mix (hero) -->
-    <section class="panel mixer-panel" aria-labelledby="mixer-heading">
+    <!-- tabindex="-1" so the skip link actually moves focus here, not just scroll -->
+    <section class="panel mixer-panel" id="mixer" tabindex="-1" aria-labelledby="mixer-heading">
       <div class="panel-head">
         <h2 id="mixer-heading">Mix</h2>
         <div class="mix-head-actions">
@@ -173,6 +174,8 @@
             <span class="mud-badge" id="mud-badge">Mud risk</span>
             <span class="micro" id="mud-note"></span>
           </div>
+          <!-- Teaches on the sample mix's result: the grey is the point, not a mistake. -->
+          <p class="micro sample-lesson" id="sample-lesson" hidden></p>
           <div class="light-preview-block">
             <div class="light-preview-row">
               <span class="micro">Viewing light</span>
@@ -196,7 +199,11 @@
                 <span>D75</span>
               </div>
             </div>
-            <p class="micro" id="light-note">CIE spectral illuminants · 1931 2° observer · Bradford CAT to sRGB.</p>
+            <p class="micro" id="light-note">Daylight D65</p>
+            <details class="light-detail">
+              <summary class="micro">Colour-science detail</summary>
+              <p class="micro" id="light-note-detail">CIE spectral illuminants · 1931 2° observer · Bradford CAT to sRGB.</p>
+            </details>
           </div>
           <div class="row-actions result-actions">
             <button type="button" class="btn btn-primary" id="save-mix" disabled>Save</button>
@@ -250,7 +257,7 @@
       <p class="empty-state" id="glaze-empty">No layers yet. Mix a colour, then <strong>Add glaze</strong>.</p>
 
       <div class="glaze-preview-wrap">
-        <div class="glaze-preview" id="glaze-preview" aria-label="Glaze composite preview"></div>
+        <div class="glaze-preview" id="glaze-preview" role="img" aria-label="Glaze composite preview"></div>
         <div class="glaze-preview-meta">
           <code id="glaze-hex">—</code>
           <button type="button" class="btn btn-secondary btn-sm" id="copy-glaze-hex" disabled>Copy</button>
@@ -348,8 +355,8 @@
       <div class="fold-body">
         <div class="seg-toggle deck-views" role="group" aria-label="Deck view">
           <button type="button" class="seg-btn is-active" data-deckview="themes" aria-pressed="true">Themes</button>
-          <button type="button" class="seg-btn" data-deckview="grid" aria-pressed="false">Mix grid</button>
-          <button type="button" class="seg-btn" data-deckview="chart" aria-pressed="false">Mix chart</button>
+          <button type="button" class="seg-btn" data-deckview="grid" aria-pressed="false">Two paints</button>
+          <button type="button" class="seg-btn" data-deckview="chart" aria-pressed="false">Whole palette</button>
           <button type="button" class="seg-btn" data-deckview="match" aria-pressed="false">Match a colour</button>
         </div>
 
@@ -364,7 +371,7 @@
           <div class="deck-grid" id="deck-grid"></div>
         </div>
 
-        <!-- Mix grid: the full ratio range between two pigments -->
+        <!-- Two paints: the full ratio range between two chosen pigments -->
         <div id="deckview-grid" hidden>
           <p class="hint">Pick two pigments to see the whole range of mixes between them — from pure A to pure B. Tap any step to load it.</p>
           <div class="grid-controls">
@@ -375,7 +382,7 @@
           <p class="micro">Swatches shown at ~35% water. Two-pigment mixes stay cleaner than three.</p>
         </div>
 
-        <!-- Mix chart: the classic N×N palette matrix -->
+        <!-- Whole palette: the classic N×N palette matrix -->
         <div id="deckview-chart" hidden>
           <p class="hint">Every paint in a set mixed against every other — the chart watercolourists paint by hand from a pan set. The diagonal is pure pigment; each row runs that pigment against the whole palette. Tap any cell to load it.</p>
           <div class="grid-controls chart-controls">
@@ -426,8 +433,8 @@
       <div class="fold-body">
         <div class="tools-grid tools-grid-wide">
           <div class="tool-card tool-card-wide">
-            <h3>Ratio strip</h3>
-            <p class="micro">The ratio range between the first two paints in your mix — any paint, including brand colours. For a whole palette against itself, see <strong>Mixing decks → Mix chart</strong>.</p>
+            <h3>This mix, every ratio</h3>
+            <p class="micro">The ratio range between the first two paints in your mix — any paint, including brand colours. For a whole palette against itself, see <strong>Mixing decks → Whole palette</strong>.</p>
             <button type="button" class="btn btn-secondary btn-sm" id="build-mix-chart" disabled>Build strip</button>
             <div id="mix-chart" class="mix-chart" hidden></div>
           </div>
@@ -625,8 +632,8 @@
           <p>Four views, switched at the top of the panel:</p>
           <ul>
             <li><strong>Themes</strong> — curated recipe cards across all five mediums (skies, foliage, sunsets, autumn, water, skin, neutrals, florals, architecture, landscape, portraits, plus gouache / acrylic / oil decks). Every swatch is <strong>mixed live by the pigment engine</strong>; the recipe shows each paint, its <strong>ratio</strong> (×parts) and the <strong>water / white / black</strong> level. <strong>Print deck</strong> makes a physical card sheet</li>
-            <li><strong>Mix grid</strong> — pick any two pigments to see the full ratio range between them (pure A → pure B), like a systematic mixing chart</li>
-            <li><strong>Mix chart</strong> — the classic <strong>N×N palette matrix</strong>: every paint in a set against every other, diagonal = pure pigment. Chart the limited palette, the core pigment list, or any <strong>saved set</strong> (so you can chart your own paint box). The ratio defaults to <strong>2:1 row-dominant</strong>, matching a hand-painted chart where the row pigment goes down first — so each pair reads twice, once per triangle; choose 1:1 and the chart becomes symmetric. <strong>Print chart</strong> gives the predicted version, <strong>Print blank template</strong> a labelled empty grid to paint into</li>
+            <li><strong>Two paints</strong> — pick any two pigments to see the full ratio range between them (pure A → pure B), like a systematic mixing chart</li>
+            <li><strong>Whole palette</strong> — the classic <strong>N×N palette matrix</strong>: every paint in a set against every other, diagonal = pure pigment. Chart the limited palette, the core pigment list, or any <strong>saved set</strong> (so you can chart your own paint box). The ratio defaults to <strong>2:1 row-dominant</strong>, matching a hand-painted chart where the row pigment goes down first — so each pair reads twice, once per triangle; choose 1:1 and the chart becomes symmetric. <strong>Print chart</strong> gives the predicted version, <strong>Print blank template</strong> a labelled empty grid to paint into</li>
             <li><strong>Match a colour</strong> — reverse mixing: pick a target colour and we find the closest 1–2 pigment recipes by ΔE</li>
             <li><strong>Tap any card, grid step, chart cell, or match</strong> to load it into the mixer, then tweak (Undo restores your previous mix)</li>
           </ul>
@@ -635,7 +642,7 @@
         <section class="help-section">
           <h3>9. Studio tools</h3>
           <ul>
-            <li><strong>Ratio strip</strong> — the ratio range between the first two paints in the mix (works with any paint, including brand colours; for a whole palette against itself use <strong>Mixing decks → Mix chart</strong>)</li>
+            <li><strong>This mix, every ratio</strong> — the ratio range between the first two paints in the mix (works with any paint, including brand colours; for a whole palette against itself use <strong>Mixing decks → Whole palette</strong>)</li>
             <li><strong>Compare A / B</strong> — park two recipes side by side and reload either</li>
             <li><strong>Print palette chart</strong> — limited tubes + sample 1:1 mixes</li>
             <li><strong>Share QR</strong> — same share link as a QR image</li>

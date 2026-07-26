@@ -966,6 +966,14 @@
     }
     if (el.referencePanel) el.referencePanel.open = true;
     renderMode();
+    // The sample deliberately returns a neutral, and Mud watch will flag it.
+    // Say why, so a first-timer reads the grey as the lesson, not a mistake.
+    const lesson = document.getElementById("sample-lesson");
+    if (lesson) {
+      lesson.textContent =
+        "This pair sits opposite each other on the wheel, so they cancel into a grey — that is what “Mud watch” is reporting. Complements are how you mix neutrals on purpose; slide the parts to lean it warm or cool.";
+      lesson.hidden = false;
+    }
     toast("Sample mix: Ultramarine + Burnt Sienna");
     const block = document.getElementById("result-block");
     if (block) {
@@ -1373,6 +1381,8 @@
 
   function clearMix() {
     pushUndo();
+    const lesson = document.getElementById("sample-lesson");
+    if (lesson) lesson.hidden = true;
     state.slots = [];
     state.water = 40;
     state.white = 0;

@@ -2345,6 +2345,38 @@ body.help-open {
   }
 }
 
+/* First-run teaching line under the sample mix result */
+.sample-lesson {
+  margin: 0.4rem 0 0;
+  padding: 0.5rem 0.6rem;
+  border-left: 3px solid var(--accent);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  line-height: 1.45;
+}
+
+/* Colour-science detail, folded out of the default view */
+.light-detail {
+  margin-top: 0.2rem;
+}
+.light-detail > summary {
+  cursor: pointer;
+  color: var(--ink-muted);
+  list-style: none;
+}
+.light-detail > summary::-webkit-details-marker {
+  display: none;
+}
+.light-detail > summary::before {
+  content: "▸ ";
+}
+.light-detail[open] > summary::before {
+  content: "▾ ";
+}
+.light-detail > p {
+  margin: 0.25rem 0 0;
+}
+
 /* Mix chart — N×N palette matrix */
 .sr-only {
   position: absolute;

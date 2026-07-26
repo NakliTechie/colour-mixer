@@ -242,6 +242,9 @@
       activeSw.parentElement.classList.add("is-active");
     }
 
+    // Plain label stays visible; the spectral detail folds away so a newcomer
+    // isn't met with white-point coordinates before their first mix.
+    const noteDetail = $("#light-note-detail");
     if (note) {
       if (L && L.metaForUi) {
         const m = L.metaForUi(lightMode);
@@ -255,10 +258,13 @@
                 : "";
             })()
           : "";
-        note.textContent = `${m.label} (${m.cct}) · ${m.note} · white ${xy} · spectral R×SPD×CIE 1931 2° · Bradford→sRGB`;
+        note.textContent = `${m.label} (${m.cct}) · ${m.note}`;
+        if (noteDetail)
+          noteDetail.textContent = `White point ${xy} · spectral R×SPD×CIE 1931 2° · Bradford→sRGB`;
       } else {
         note.textContent =
           "Lab illuminants module not loaded — showing unshifted colour.";
+        if (noteDetail) noteDetail.textContent = "";
       }
     }
   }
@@ -777,12 +783,24 @@
   // ——— Help modal ———
   let helpLastFocus = null;
 
+  // The modal declares aria-modal, so keyboard focus must not be able to walk
+  // out of it into the page underneath (which the overlay hides). Inert every
+  // body child except the modal itself — naming header/main/footer misses the
+  // skip link and the sticky result bar, which are also direct body children.
+  function helpBackdropEls() {
+    const modal = $("#help-modal");
+    return Array.from(document.body.children).filter(
+      (el) => el !== modal && el.tagName !== "SCRIPT"
+    );
+  }
+
   function openHelp() {
     const modal = $("#help-modal");
     if (!modal) return;
     helpLastFocus = document.activeElement;
     modal.hidden = false;
     document.body.classList.add("help-open");
+    helpBackdropEls().forEach((el) => el.setAttribute("inert", ""));
     const closeBtn = $("#close-help");
     if (closeBtn) closeBtn.focus();
   }
@@ -792,6 +810,7 @@
     if (!modal || modal.hidden) return;
     modal.hidden = true;
     document.body.classList.remove("help-open");
+    helpBackdropEls().forEach((el) => el.removeAttribute("inert"));
     if (helpLastFocus && typeof helpLastFocus.focus === "function") {
       helpLastFocus.focus();
     }
